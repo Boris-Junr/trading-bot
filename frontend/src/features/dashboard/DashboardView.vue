@@ -210,21 +210,21 @@ onMounted(async () => {
 .position-card:hover {
   border-color: var(--accent-primary);
   background: var(--bg-hover);
-  box-shadow: 0 0 20px rgba(0, 255, 136, 0.2), 0 0 40px rgba(0, 255, 136, 0.1);
+  box-shadow: 0 0 20px rgba(62, 207, 142, 0.2), 0 0 40px rgba(62, 207, 142, 0.1);
   transform: translateX(4px);
 }
 
 .position-card:active {
   transform: translateX(2px) scale(0.98);
-  box-shadow: 0 0 15px rgba(0, 255, 136, 0.3), inset 0 2px 4px rgba(0, 255, 136, 0.2);
+  box-shadow: 0 0 15px rgba(62, 207, 142, 0.3), inset 0 2px 4px rgba(62, 207, 142, 0.2);
 }
 
 .position-icon {
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 0.5rem;
-  background: rgba(0, 255, 136, 0.1);
-  border: 1px solid rgba(0, 255, 136, 0.3);
+  background: rgba(62, 207, 142, 0.1);
+  border: 1px solid rgba(62, 207, 142, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -233,8 +233,8 @@ onMounted(async () => {
 }
 
 .position-card:hover .position-icon {
-  background: rgba(0, 255, 136, 0.2);
-  border-color: rgba(0, 255, 136, 0.5);
-  box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
+  background: rgba(62, 207, 142, 0.2);
+  border-color: rgba(62, 207, 142, 0.5);
+  box-shadow: 0 0 15px rgba(62, 207, 142, 0.4);
 }
 </style>

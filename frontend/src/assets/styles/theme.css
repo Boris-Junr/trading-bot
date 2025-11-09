@@ -15,14 +15,14 @@
     --glass-bg: rgba(17, 24, 39, 0.7);
     --glass-border: rgba(255, 255, 255, 0.1);
 
-    /* === ACCENT COLORS (Neon) === */
-    --accent-primary: #00ff88;      /* Deep green neon */
-    --accent-primary-dim: #00b359;
-    --accent-secondary: #ff00ff;    /* Magenta neon */
-    --accent-success: #10d96f;      /* Bright green neon */
-    --accent-danger: #ff3864;       /* Red neon */
-    --accent-warning: #ffb800;      /* Amber neon */
-    --accent-info: #00ff88;         /* Green (was Blue) */
+    /* === ACCENT COLORS === */
+    --accent-primary: #3ECF8E;      /* Supabase brand green */
+    --accent-primary-dim: #2da771;
+    --accent-secondary: #c44569;    /* Deep rose */
+    --accent-success: #4ADE80;      /* Bright success green */
+    --accent-danger: #c0392b;       /* Deep red */
+    --accent-warning: #d68910;      /* Deep amber */
+    --accent-info: #3ECF8E;         /* Supabase green */
 
     /* === TEXT COLORS === */
     --text-primary: #e5e7eb;
@@ -35,10 +35,10 @@
     --border-hover: var(--accent-primary);
 
     /* Glow effects */
-    --glow-primary: 0 0 20px rgba(0, 255, 136, 0.5), 0 0 40px rgba(0, 255, 136, 0.3);
-    --glow-success: 0 0 20px rgba(16, 217, 111, 0.5), 0 0 40px rgba(16, 217, 111, 0.3);
-    --glow-danger: 0 0 20px rgba(255, 56, 100, 0.5);
-    --glow-warning: 0 0 20px rgba(255, 184, 0, 0.5);
+    --glow-primary: 0 0 20px rgba(62, 207, 142, 0.5), 0 0 40px rgba(62, 207, 142, 0.3);
+    --glow-success: 0 0 20px rgba(74, 222, 128, 0.5), 0 0 40px rgba(74, 222, 128, 0.3);
+    --glow-danger: 0 0 20px rgba(192, 57, 43, 0.5);
+    --glow-warning: 0 0 20px rgba(214, 137, 16, 0.5);
 
     /* === SPACING & SIZING === */
     --sidebar-width: 16rem;
