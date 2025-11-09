@@ -13,9 +13,9 @@ import json
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from backtesting.engine import BacktestEngine
-from strategies.implementations.ml_predictive_strategy import MLPredictiveStrategy
+from domain.strategies.implementations.ml_predictive_strategy import MLPredictiveStrategy
 from data.historical import HistoricalDataFetcher
-from analysis.models.predictors.multi_ohlc_predictor import MultiOHLCPredictor
+from domain.ml.predictors.multi_ohlc_predictor import MultiOHLCPredictor
 import math
 
 
@@ -265,7 +265,7 @@ class BacktestService:
                 model_path = params.get('model_path')
                 if not model_path:
                     # Find a model for this symbol
-                    models_dir = Path(__file__).parent.parent.parent / 'models'
+                    models_dir = Path(__file__).parent.parent.parent / 'runtime' / 'models'
                     timeframe = params.get('timeframe', '1m')
 
                     # Normalize symbol for filesystem (replace / with _)
@@ -431,7 +431,7 @@ class BacktestService:
                 return None
 
             # Save model
-            models_dir = Path(__file__).parent.parent.parent / 'models'
+            models_dir = Path(__file__).parent.parent.parent / 'runtime' / 'models'
             models_dir.mkdir(parents=True, exist_ok=True)
 
             # Normalize symbol for filesystem (replace / with _)

@@ -16,7 +16,7 @@ Features:
 
 Usage:
     from backtesting import BacktestEngine
-    from strategies import MomentumScalper
+    from domain.strategies import MomentumScalper
     from data import HistoricalDataFetcher
 
     # Get data
@@ -45,6 +45,6 @@ Usage:
 """
 
 from .engine import BacktestEngine
-from .csv_logger import BacktestCSVLogger
+from .reporting.csv_logger import BacktestCSVLogger
 
 __all__ = ['BacktestEngine', 'BacktestCSVLogger']

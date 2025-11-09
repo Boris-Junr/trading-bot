@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 import numpy as np
 
-from strategies import (
+from domain.strategies import (
     Strategy, Signal, SignalType, Position, Portfolio,
     SMACrossover, RSIMeanReversion, MultiIndicator
 )

@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from datetime import datetime, timedelta
 from data import HistoricalDataFetcher
-from strategies import SMACrossover, RSIMeanReversion, MultiIndicator
+from domain.strategies import SMACrossover, RSIMeanReversion, MultiIndicator
 from backtesting import BacktestEngine
 
 

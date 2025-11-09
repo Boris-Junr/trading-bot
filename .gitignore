@@ -43,3 +43,8 @@ htmlcov/
 *.h5
 *.parquet
 data/
+
+# Runtime artifacts
+backend/runtime/models/
+backend/runtime/cache/
+backend/runtime/output/

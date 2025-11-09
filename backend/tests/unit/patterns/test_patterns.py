@@ -7,7 +7,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 from datetime import datetime, timedelta
 from data import HistoricalDataFetcher
-from analysis.patterns import TrianglePatterns, FlagPattern, PennantPattern, HeadAndShoulders, DoubleTops
+from domain.patterns import TrianglePatterns, FlagPattern, PennantPattern, HeadAndShoulders, DoubleTops
 
 def main():
     print("=" * 70)

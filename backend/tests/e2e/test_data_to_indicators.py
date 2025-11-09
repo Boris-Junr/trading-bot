@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from datetime import datetime, timedelta
 from data import HistoricalDataFetcher
-from analysis.indicators import SMA, EMA, MACD, RSI, BollingerBands, ATR
+from domain.indicators import SMA, EMA, MACD, RSI, BollingerBands, ATR
 import pandas as pd
 
 

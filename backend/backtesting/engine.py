@@ -20,8 +20,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from strategies import Strategy, Portfolio, Signal, SignalType
-from backtesting.csv_logger import BacktestCSVLogger
+from domain.strategies import Strategy, Portfolio, Signal, SignalType
+from backtesting.reporting.csv_logger import BacktestCSVLogger
 
 
 class BacktestEngine:

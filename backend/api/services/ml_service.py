@@ -14,8 +14,8 @@ import os
 # Add backend to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from analysis.models.predictors.autoregressive_predictor import AutoregressivePricePredictor
-from analysis.models.predictors.multi_ohlc_predictor import MultiOHLCPredictor
+from domain.ml.predictors.autoregressive_predictor import AutoregressivePricePredictor
+from domain.ml.predictors.multi_ohlc_predictor import MultiOHLCPredictor
 from data.historical import HistoricalDataFetcher
 
 
