@@ -1,123 +1,46 @@
+/**
+ * Main Stylesheet - Trading Bot
+ * Modern Cyber Dark Theme
+ */
+
 @import "tailwindcss";
+@import "./theme.css";
+@import "./components.css";
 
-@theme {
-  --color-primary-50: #f0f9ff;
-  --color-primary-100: #e0f2fe;
-  --color-primary-200: #bae6fd;
-  --color-primary-300: #7dd3fc;
-  --color-primary-400: #38bdf8;
-  --color-primary-500: #0ea5e9;
-  --color-primary-600: #0284c7;
-  --color-primary-700: #0369a1;
-  --color-primary-800: #075985;
-  --color-primary-900: #0c4a6e;
+/* === TAILWIND LAYERS === */
+@layer base {
+  /* Import Inter & JetBrains Mono fonts */
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 }
 
-body {
-  background-color: rgb(249 250 251);
-  color: rgb(17 24 39);
-}
+@layer utilities {
+  /* Custom animations */
+  .transition-smooth {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
 
-.btn-primary {
-  padding: 0.5rem 1rem;
-  background-color: var(--color-primary-600);
-  color: white;
-  border-radius: 0.5rem;
-  transition: background-color 0.2s;
-}
+  /* Gradient text */
+  .text-glow {
+    text-shadow: 0 0 10px currentColor;
+  }
 
-.btn-primary:hover {
-  background-color: var(--color-primary-700);
-}
+  /* Backdrop blur */
+  .backdrop-blur-glass {
+    backdrop-filter: blur(10px);
+  }
 
-.btn-secondary {
-  padding: 0.5rem 1rem;
-  background-color: rgb(229 231 235);
-  color: rgb(31 41 55);
-  border-radius: 0.5rem;
-  transition: background-color 0.2s;
-}
+  /* Container utilities */
+  .container-padding {
+    @apply px-4 md:px-6 lg:px-8;
+  }
 
-.btn-secondary:hover {
-  background-color: rgb(209 213 219);
-}
+  /* Scrollbar hidden */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 
-.card {
-  background-color: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-  padding: 1.5rem;
-}
-
-.card-header {
-  font-size: 1.125rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-  color: rgb(31 41 55);
-}
-
-.stat-card {
-  background-color: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-  padding: 1rem;
-}
-
-.stat-label {
-  font-size: 0.875rem;
-  color: rgb(75 85 99);
-  margin-bottom: 0.25rem;
-}
-
-.stat-value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: rgb(17 24 39);
-}
-
-.positive {
-  color: rgb(22 163 74);
-}
-
-.negative {
-  color: rgb(220 38 38);
-}
-
-.neutral {
-  color: rgb(75 85 99);
-}
-
-.table-container {
-  overflow-x: auto;
-}
-
-.data-table {
-  min-width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-}
-
-.data-table thead {
-  background-color: rgb(249 250 251);
-}
-
-.data-table th {
-  padding: 0.75rem 1.5rem;
-  text-align: left;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: rgb(107 114 128);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.data-table td {
-  padding: 1rem 1.5rem;
-  white-space: nowrap;
-  font-size: 0.875rem;
-  color: rgb(17 24 39);
-}
-
-.data-table tbody tr:hover {
-  background-color: rgb(249 250 251);
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }

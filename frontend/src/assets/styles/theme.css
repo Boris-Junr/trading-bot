@@ -1,0 +1,108 @@
+/**
+ * Trading Bot - Cyber Dark Theme
+ * Modern, techy design with neon accents
+ */
+
+@layer theme {
+  :root {
+    /* === BACKGROUND COLORS === */
+    --bg-primary: #0a0e1a;
+    --bg-secondary: #111827;
+    --bg-tertiary: #1f2937;
+    --bg-hover: #374151;
+
+    /* Glassmorphism */
+    --glass-bg: rgba(17, 24, 39, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.1);
+
+    /* === ACCENT COLORS (Neon) === */
+    --accent-primary: #00f0ff;      /* Cyan neon */
+    --accent-primary-dim: #00a8b5;
+    --accent-secondary: #ff00ff;    /* Magenta neon */
+    --accent-success: #00ff9f;      /* Green neon */
+    --accent-danger: #ff3864;       /* Red neon */
+    --accent-warning: #ffb800;      /* Amber neon */
+    --accent-info: #3b82f6;         /* Blue */
+
+    /* === TEXT COLORS === */
+    --text-primary: #e5e7eb;
+    --text-secondary: #9ca3af;
+    --text-muted: #6b7280;
+    --text-inverse: #0a0e1a;
+
+    /* === BORDER & EFFECTS === */
+    --border-default: rgba(255, 255, 255, 0.1);
+    --border-hover: var(--accent-primary);
+
+    /* Glow effects */
+    --glow-primary: 0 0 20px rgba(0, 240, 255, 0.5);
+    --glow-success: 0 0 20px rgba(0, 255, 159, 0.5);
+    --glow-danger: 0 0 20px rgba(255, 56, 100, 0.5);
+    --glow-warning: 0 0 20px rgba(255, 184, 0, 0.5);
+
+    /* === SPACING & SIZING === */
+    --sidebar-width: 16rem;
+    --header-height: 4rem;
+
+    /* === TRANSITIONS === */
+    --transition-fast: 150ms ease;
+    --transition-base: 200ms ease;
+    --transition-slow: 300ms ease;
+
+    /* === Z-INDEX === */
+    --z-sidebar: 40;
+    --z-header: 30;
+    --z-modal: 50;
+    --z-tooltip: 60;
+    --z-notification: 70;
+  }
+}
+
+/* === BASE STYLES === */
+* {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+}
+
+/* Monospace for numbers and data */
+.font-mono {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+}
+
+/* === SCROLLBAR STYLING === */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-hover);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* === SELECTION STYLING === */
+::selection {
+  background: var(--accent-primary);
+  color: var(--text-inverse);
+}
+
+::-moz-selection {
+  background: var(--accent-primary);
+  color: var(--text-inverse);
+}

@@ -6,7 +6,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'dashboard',
-      component: () => import('../views/DashboardView.vue'),
+      component: () => import('../features/dashboard/DashboardView.vue'),
       meta: { title: 'Dashboard' },
     },
     {
