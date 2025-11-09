@@ -83,8 +83,16 @@ const trendIcon = computed(() => {
 
 <style scoped>
 .stat-glow {
-  @apply absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300;
-  @apply rounded-xl blur-xl;
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 300ms ease;
+  border-radius: 0.75rem;
+  filter: blur(1rem);
+}
+
+.group:hover .stat-glow {
+  opacity: 1;
 }
 
 .glow-primary {
@@ -108,27 +116,37 @@ const trendIcon = computed(() => {
 }
 
 .stat-border {
-  @apply absolute top-0 left-0 right-0 h-1 rounded-t-xl opacity-0 group-hover:opacity-100;
-  @apply transition-opacity duration-300;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 0.25rem;
+  border-radius: 0.75rem 0.75rem 0 0;
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+
+.group:hover .stat-border {
+  opacity: 1;
 }
 
 .border-primary {
-  @apply bg-accent-primary;
+  background: var(--accent-primary);
 }
 
 .border-success {
-  @apply bg-accent-success;
+  background: var(--accent-success);
 }
 
 .border-danger {
-  @apply bg-accent-danger;
+  background: var(--accent-danger);
 }
 
 .border-info {
-  @apply bg-accent-info;
+  background: var(--accent-info);
 }
 
 .border-warning {
-  @apply bg-accent-warning;
+  background: var(--accent-warning);
 }
 </style>

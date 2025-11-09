@@ -199,17 +199,28 @@ onMounted(async () => {
 
 <style scoped>
 .position-card {
-  @apply p-4 rounded-lg bg-bg-tertiary border border-border-default;
-  @apply transition-all duration-200;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-default);
+  transition: all 200ms ease;
 }
 
 .position-card:hover {
-  @apply border-accent-primary bg-bg-hover;
+  border-color: var(--accent-primary);
+  background: var(--bg-hover);
   box-shadow: 0 0 20px rgba(0, 240, 255, 0.1);
 }
 
 .position-icon {
-  @apply w-10 h-10 rounded-lg bg-accent-primary/10 border border-accent-primary/30;
-  @apply flex items-center justify-center text-accent-primary;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.5rem;
+  background: rgba(0, 240, 255, 0.1);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-primary);
 }
 </style>
