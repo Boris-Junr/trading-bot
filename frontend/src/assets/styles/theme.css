@@ -16,13 +16,13 @@
     --glass-border: rgba(255, 255, 255, 0.1);
 
     /* === ACCENT COLORS (Neon) === */
-    --accent-primary: #00f0ff;      /* Cyan neon */
-    --accent-primary-dim: #00a8b5;
+    --accent-primary: #00ff88;      /* Deep green neon */
+    --accent-primary-dim: #00b359;
     --accent-secondary: #ff00ff;    /* Magenta neon */
-    --accent-success: #00ff9f;      /* Green neon */
+    --accent-success: #10d96f;      /* Bright green neon */
     --accent-danger: #ff3864;       /* Red neon */
     --accent-warning: #ffb800;      /* Amber neon */
-    --accent-info: #3b82f6;         /* Blue */
+    --accent-info: #00ff88;         /* Green (was Blue) */
 
     /* === TEXT COLORS === */
     --text-primary: #e5e7eb;
@@ -35,8 +35,8 @@
     --border-hover: var(--accent-primary);
 
     /* Glow effects */
-    --glow-primary: 0 0 20px rgba(0, 240, 255, 0.5);
-    --glow-success: 0 0 20px rgba(0, 255, 159, 0.5);
+    --glow-primary: 0 0 20px rgba(0, 255, 136, 0.5), 0 0 40px rgba(0, 255, 136, 0.3);
+    --glow-success: 0 0 20px rgba(16, 217, 111, 0.5), 0 0 40px rgba(16, 217, 111, 0.3);
     --glow-danger: 0 0 20px rgba(255, 56, 100, 0.5);
     --glow-warning: 0 0 20px rgba(255, 184, 0, 0.5);
 
