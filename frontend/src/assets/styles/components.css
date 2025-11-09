@@ -11,18 +11,11 @@
     border-radius: 0.75rem;
     padding: 1.5rem;
     transition: all var(--transition-base);
-    cursor: pointer;
   }
 
   .card:hover {
     border-color: var(--accent-primary);
     box-shadow: var(--glow-primary);
-    transform: translateY(-2px) scale(1.01);
-  }
-
-  .card:active {
-    transform: translateY(0) scale(0.99);
-    box-shadow: var(--glow-primary), inset 0 2px 4px rgba(62, 207, 142, 0.2);
   }
 
   .card-header {
@@ -45,18 +38,11 @@
     border-radius: 0.75rem;
     padding: 1.25rem;
     transition: all var(--transition-base);
-    cursor: pointer;
   }
 
   .stat-card:hover {
     border-color: var(--accent-primary);
-    transform: translateY(-2px) scale(1.02);
     box-shadow: var(--glow-primary);
-  }
-
-  .stat-card:active {
-    transform: translateY(0) scale(0.98);
-    box-shadow: var(--glow-primary), inset 0 2px 6px rgba(62, 207, 142, 0.3);
   }
 
   .stat-card::before {
@@ -65,19 +51,14 @@
     top: 0;
     left: 0;
     right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, var(--accent-primary), var(--accent-success));
+    height: 2px;
+    background: var(--accent-primary);
     opacity: 0;
     transition: opacity var(--transition-base);
   }
 
   .stat-card:hover::before {
-    opacity: 1;
-  }
-
-  .stat-card:active::before {
-    height: 4px;
-    opacity: 1;
+    opacity: 0.5;
   }
 
   .stat-label {
@@ -125,13 +106,12 @@
   }
 
   .btn-primary:hover {
+    opacity: 0.9;
     box-shadow: var(--glow-primary);
-    transform: translateY(-1px) scale(1.02);
   }
 
   .btn-primary:active {
-    transform: translateY(0) scale(0.98);
-    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3), var(--glow-primary);
+    opacity: 0.8;
   }
 
   .btn-secondary {
@@ -143,13 +123,10 @@
   .btn-secondary:hover {
     border-color: var(--accent-primary);
     background: var(--bg-hover);
-    box-shadow: var(--glow-primary);
-    transform: translateY(-1px);
   }
 
   .btn-secondary:active {
-    transform: translateY(0) scale(0.98);
-    box-shadow: inset 0 2px 4px rgba(62, 207, 142, 0.2);
+    opacity: 0.8;
   }
 
   .btn-danger {

@@ -203,20 +203,12 @@ onMounted(async () => {
   border-radius: 0.5rem;
   background: var(--bg-tertiary);
   border: 1px solid var(--border-default);
-  transition: all 200ms ease;
-  cursor: pointer;
+  transition: all var(--transition-base);
 }
 
 .position-card:hover {
   border-color: var(--accent-primary);
   background: var(--bg-hover);
-  box-shadow: 0 0 20px rgba(62, 207, 142, 0.2), 0 0 40px rgba(62, 207, 142, 0.1);
-  transform: translateX(4px);
-}
-
-.position-card:active {
-  transform: translateX(2px) scale(0.98);
-  box-shadow: 0 0 15px rgba(62, 207, 142, 0.3), inset 0 2px 4px rgba(62, 207, 142, 0.2);
 }
 
 .position-icon {
@@ -224,17 +216,16 @@ onMounted(async () => {
   height: 2.5rem;
   border-radius: 0.5rem;
   background: rgba(62, 207, 142, 0.1);
-  border: 1px solid rgba(62, 207, 142, 0.3);
+  border: 1px solid rgba(62, 207, 142, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--accent-primary);
-  transition: all 200ms ease;
+  transition: all var(--transition-base);
 }
 
 .position-card:hover .position-icon {
-  background: rgba(62, 207, 142, 0.2);
-  border-color: rgba(62, 207, 142, 0.5);
-  box-shadow: 0 0 15px rgba(62, 207, 142, 0.4);
+  background: rgba(62, 207, 142, 0.15);
+  border-color: rgba(62, 207, 142, 0.4);
 }
 </style>
