@@ -29,9 +29,9 @@
         </div>
 
         <div class="flex items-end">
-          <button @click="fetchPredictions" :disabled="loading" class="btn-primary">
+          <Button @click="fetchPredictions" :disabled="loading" variant="primary">
             {{ loading ? 'Loading...' : 'Generate Prediction' }}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -175,6 +175,7 @@ import { ref, computed, watch, nextTick } from 'vue';
 import type { PredictionData } from '../types';
 import api from '../services/api';
 import { useChart } from '../composables/useChart';
+import Button from '@/shared/components/ui/Button.vue';
 
 const selectedSymbol = ref('ETH_USDT');
 const selectedTimeframe = ref('1m');

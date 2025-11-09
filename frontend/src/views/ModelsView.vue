@@ -6,9 +6,9 @@
         <h1 class="text-3xl font-bold text-gray-900">ML Models</h1>
         <p class="mt-2 text-gray-600">Manage and train machine learning models</p>
       </div>
-      <button @click="showTrainModal = true" class="btn-primary">
+      <Button @click="showTrainModal = true" variant="primary">
         Train New Model
-      </button>
+      </Button>
     </div>
 
     <!-- Loading State -->
@@ -25,9 +25,9 @@
     <div v-else class="grid grid-cols-1 gap-6">
       <div v-if="models.length === 0" class="card text-center py-12">
         <p class="text-gray-500">No models trained yet</p>
-        <button @click="showTrainModal = true" class="btn-primary mt-4">
+        <Button @click="showTrainModal = true" variant="primary" class="mt-4">
           Train Your First Model
-        </button>
+        </Button>
       </div>
 
       <!-- Model Cards -->
@@ -85,9 +85,9 @@
             </div>
 
             <div class="mt-4 flex gap-2">
-              <button class="btn-secondary text-sm">View Details</button>
-              <button class="btn-secondary text-sm">Test Model</button>
-              <button class="btn-secondary text-sm">Export</button>
+              <Button variant="secondary" size="sm">View Details</Button>
+              <Button variant="secondary" size="sm">Test Model</Button>
+              <Button variant="secondary" size="sm">Export</Button>
             </div>
           </div>
         </div>
@@ -153,10 +153,10 @@
           </div>
 
           <div class="mt-6 flex gap-3">
-            <button @click="trainModel" :disabled="training" class="btn-primary flex-1">
+            <Button @click="trainModel" :disabled="training" variant="primary" class="flex-1">
               {{ training ? 'Training...' : 'Start Training' }}
-            </button>
-            <button @click="showTrainModal = false" class="btn-secondary">Cancel</button>
+            </Button>
+            <Button @click="showTrainModal = false" variant="secondary">Cancel</Button>
           </div>
         </div>
       </div>
@@ -168,6 +168,7 @@
 import { ref, onMounted } from 'vue';
 import type { ModelInfo } from '../types';
 import api from '../services/api';
+import Button from '@/shared/components/ui/Button.vue';
 
 const showTrainModal = ref(false);
 const models = ref<ModelInfo[]>([]);

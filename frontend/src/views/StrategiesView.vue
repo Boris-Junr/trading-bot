@@ -6,9 +6,9 @@
         <h1 class="text-3xl font-bold text-gray-900">Trading Strategies</h1>
         <p class="mt-2 text-gray-600">Manage and configure your trading strategies</p>
       </div>
-      <button @click="showCreateModal = true" class="btn-primary">
+      <Button @click="showCreateModal = true" variant="primary">
         Create Strategy
-      </button>
+      </Button>
     </div>
 
     <!-- Loading State -->
@@ -25,9 +25,9 @@
     <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <div v-if="strategies.length === 0" class="col-span-2 card text-center py-12">
         <p class="text-gray-500">No strategies configured yet</p>
-        <button @click="showCreateModal = true" class="btn-primary mt-4">
+        <Button @click="showCreateModal = true" variant="primary" class="mt-4">
           Create Your First Strategy
-        </button>
+        </Button>
       </div>
 
       <!-- Strategy Cards -->
@@ -53,21 +53,25 @@
         </div>
 
         <div class="flex gap-2">
-          <button class="btn-secondary flex-1 text-sm">Edit</button>
-          <button
+          <Button variant="secondary" size="sm" class="flex-1">Edit</Button>
+          <Button
             v-if="strategy.status === 'active'"
             @click="deactivate(strategy.id)"
-            class="btn-secondary flex-1 text-sm"
+            variant="secondary"
+            size="sm"
+            class="flex-1"
           >
             Deactivate
-          </button>
-          <button
+          </Button>
+          <Button
             v-else
             @click="activate(strategy.id)"
-            class="btn-primary flex-1 text-sm"
+            variant="primary"
+            size="sm"
+            class="flex-1"
           >
             Activate
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -130,8 +134,8 @@
           </div>
 
           <div class="mt-6 flex gap-3">
-            <button class="btn-primary flex-1">Create Strategy</button>
-            <button @click="showCreateModal = false" class="btn-secondary">Cancel</button>
+            <Button variant="primary" class="flex-1">Create Strategy</Button>
+            <Button @click="showCreateModal = false" variant="secondary">Cancel</Button>
           </div>
         </div>
       </div>
@@ -143,6 +147,7 @@
 import { ref, onMounted } from 'vue';
 import type { Strategy } from '../types';
 import api from '../services/api';
+import Button from '@/shared/components/ui/Button.vue';
 
 const showCreateModal = ref(false);
 const strategies = ref<Strategy[]>([]);

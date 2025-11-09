@@ -141,6 +141,7 @@ import { useRoute } from 'vue-router';
 import type { BacktestResult } from '../types';
 import api from '../services/api';
 import { useChart } from '../composables/useChart';
+import Button from '@/shared/components/ui/Button.vue';
 
 const route = useRoute();
 const backtest = ref<BacktestResult | null>(null);

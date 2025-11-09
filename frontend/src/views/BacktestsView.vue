@@ -6,13 +6,13 @@
         <h1 class="text-3xl font-bold text-gray-900">Backtests</h1>
         <p class="mt-2 text-gray-600">Test your strategies on historical data</p>
       </div>
-      <button
+      <Button
         @click="showRunModal = true"
         :disabled="loadingModels"
-        class="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+        variant="primary"
       >
         {{ loadingModels ? 'Loading...' : 'Run New Backtest' }}
-      </button>
+      </Button>
     </div>
 
     <!-- No Models Info -->
@@ -44,12 +44,13 @@
     <div v-else>
       <div v-if="sortedBacktests.length === 0" class="card text-center py-12">
         <p class="text-gray-500">No backtests run yet</p>
-        <button
+        <Button
           @click="showRunModal = true"
-          class="btn-primary mt-4"
+          variant="primary"
+          class="mt-4"
         >
           Run Your First Backtest
-        </button>
+        </Button>
         <p v-if="!hasModels" class="text-sm text-gray-500 mt-4">
           A model will be automatically trained when you run your first backtest
         </p>
@@ -234,12 +235,12 @@
           </div>
 
           <div class="mt-6 flex gap-3">
-            <button @click="runBacktest" :disabled="running" class="btn-primary flex-1">
+            <Button @click="runBacktest" :disabled="running" variant="primary" class="flex-1">
               {{ running ? 'Running...' : 'Run Backtest' }}
-            </button>
-            <button @click="showRunModal = false" :disabled="running" class="btn-secondary">
+            </Button>
+            <Button @click="showRunModal = false" :disabled="running" variant="secondary">
               Cancel
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -254,6 +255,7 @@ import { useBacktestStore } from '../stores/backtest';
 import { storeToRefs } from 'pinia';
 import type { BacktestResult, ModelInfo } from '../types';
 import api from '../services/api';
+import Button from '@/shared/components/ui/Button.vue';
 
 const router = useRouter();
 const backtestStore = useBacktestStore();

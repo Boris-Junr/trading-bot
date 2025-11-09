@@ -51,9 +51,9 @@
       <div class="card mb-8">
         <div class="flex justify-between items-center mb-6">
           <h2 class="card-header">Active Positions</h2>
-          <button @click="refreshPortfolio" class="btn-secondary text-sm">
+          <Button @click="refreshPortfolio" variant="secondary" size="sm">
             Refresh
-          </button>
+          </Button>
         </div>
 
         <div v-if="!hasPositions" class="text-center py-8 text-gray-500">
@@ -118,6 +118,7 @@ import { usePortfolioStore } from '../stores/portfolio';
 import { storeToRefs } from 'pinia';
 import { useChart } from '../composables/useChart';
 import api from '../services/api';
+import Button from '@/shared/components/ui/Button.vue';
 
 const portfolioStore = usePortfolioStore();
 const {
