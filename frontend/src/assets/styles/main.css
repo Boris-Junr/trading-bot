@@ -31,7 +31,22 @@
 
   /* Container utilities */
   .container-padding {
-    @apply px-4 md:px-6 lg:px-8;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  @media (min-width: 768px) {
+    .container-padding {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .container-padding {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
   }
 
   /* Scrollbar hidden */
