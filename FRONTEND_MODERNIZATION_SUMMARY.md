@@ -287,6 +287,65 @@ import DashboardView from '../features/dashboard/DashboardView.vue'
 
 ---
 
+## Build Fix: Tailwind CSS v4 Compatibility
+
+**Date:** November 9, 2025
+**Issue:** Vite build errors due to Tailwind CSS v4 breaking changes
+
+### Problems Encountered
+
+1. **Path Alias Error:**
+   ```
+   Failed to resolve import "@/stores/portfolio"
+   ```
+   - Cause: Vite doesn't configure @ alias by default
+   - Fix: Added path alias to vite.config.ts
+
+2. **Tailwind @apply Error:**
+   ```
+   Cannot apply unknown utility class 'inset-0'
+   ```
+   - Cause: Tailwind CSS v4 removed @apply support for utility classes
+   - Fix: Replaced all @apply directives with direct CSS
+
+### Files Modified
+
+1. **vite.config.ts** - Added path alias configuration
+   ```typescript
+   resolve: {
+     alias: {
+       '@': path.resolve(__dirname, './src'),
+     },
+   }
+   ```
+
+2. **DashboardView.vue** - Replaced @apply with CSS variables
+   ```css
+   /* Before: @apply p-4 rounded-lg bg-bg-tertiary */
+   /* After: */
+   padding: 1rem;
+   border-radius: 0.5rem;
+   background: var(--bg-tertiary);
+   ```
+
+3. **StatCard.vue** - Replaced @apply with direct CSS
+   ```css
+   /* Before: @apply absolute inset-0 opacity-0 */
+   /* After: */
+   position: absolute;
+   inset: 0;
+   opacity: 0;
+   ```
+
+### Result
+✅ Frontend dev server starts successfully (http://localhost:5174)
+✅ No build errors or warnings
+✅ All hover effects and animations working
+
+**Commit:** [9d79895]
+
+---
+
 **Status:** Foundation Complete ✅
 **Next Step:** Migrate remaining views to new structure
 **Estimated Remaining:** ~6-8 hours for full migration
