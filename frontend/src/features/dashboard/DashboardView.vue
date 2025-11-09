@@ -56,7 +56,7 @@
         </div>
       </Card>
 
-      <Card title="Performance Overview" :icon="ChartLineIcon">
+      <Card title="Performance Overview" :icon="ChartPieIcon">
         <div class="h-64 flex items-center justify-center bg-bg-tertiary rounded-lg border border-border-default">
           <div class="text-center">
             <SparklesIcon class="w-12 h-12 mx-auto text-accent-secondary mb-2" />
@@ -161,7 +161,7 @@ import {
   ArrowPathIcon,
   ArrowRightIcon,
   CogIcon,
-  ChartLineIcon,
+  ChartPieIcon,
 } from '@heroicons/vue/24/outline'
 
 const portfolioStore = usePortfolioStore()
