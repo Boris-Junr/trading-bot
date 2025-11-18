@@ -31,6 +31,15 @@ from .validation import (
     print_validation_summary,
 )
 
+from .timeframes import (
+    TimeframeConfig,
+    TIMEFRAME_CONFIGS,
+    get_timeframe_config,
+    get_prediction_steps,
+    get_training_days,
+    get_max_age_days,
+)
+
 __all__ = [
     # Trading pairs
     'AssetType',
@@ -55,4 +64,11 @@ __all__ = [
     'validate_trading_request',
     'get_best_pairs_for_strategy',
     'print_validation_summary',
+    # Timeframes
+    'TimeframeConfig',
+    'TIMEFRAME_CONFIGS',
+    'get_timeframe_config',
+    'get_prediction_steps',
+    'get_training_days',
+    'get_max_age_days',
 ]
