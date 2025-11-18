@@ -1,195 +1,191 @@
 <template>
   <div>
-    <!-- Header with Back Button -->
+    <!-- Back Button -->
     <div class="mb-8">
-      <button @click="$router.back()" class="text-gray-600 hover:text-gray-900 mb-4 flex items-center gap-2">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-        </svg>
+      <Button @click="$router.back()" variant="secondary" size="sm" class="mb-4">
+        <ArrowLeftIcon class="w-4 h-4 mr-2" />
         Back to Backtests
-      </button>
-      <h1 class="text-3xl font-bold text-gray-900">Backtest Details</h1>
-      <p class="mt-2 text-gray-600">Detailed analysis of backtest performance</p>
+      </Button>
     </div>
 
     <!-- Loading State -->
     <div v-if="loading" class="flex justify-center items-center py-12">
-      <div class="text-gray-500">Loading backtest details...</div>
+      <div class="spinner"></div>
     </div>
 
     <!-- Error State -->
-    <div v-else-if="error" class="card bg-red-50 border border-red-200 mb-8">
-      <p class="text-red-600">{{ error }}</p>
+    <div v-else-if="error" class="p-4 bg-accent-danger/10 border border-accent-danger/20 rounded-xl text-accent-danger text-sm mb-8">
+      {{ error }}
     </div>
 
     <!-- Backtest Content -->
-    <div v-else-if="backtest">
+    <div v-else-if="backtest" class="space-y-8">
       <!-- Performance Summary -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div class="stat-card">
-          <div class="stat-label">Total Return</div>
-          <div class="stat-value" :class="backtest.performance.total_return >= 0 ? 'positive' : 'negative'">
-            {{ backtest.performance.total_return >= 0 ? '+' : '' }}{{ (backtest.performance.total_return * 100).toFixed(2) }}%
-          </div>
-          <div class="text-xs text-gray-500 mt-2">${{ backtest.performance.total_pnl.toFixed(2) }} profit</div>
-        </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard
+          label="Total Return"
+          :value="`${backtest.performance.total_return >= 0 ? '+' : ''}${(backtest.performance.total_return * 100).toFixed(2)}%`"
+          :change="`$${backtest.performance.total_pnl.toFixed(2)} profit`"
+          :variant="backtest.performance.total_return >= 0 ? 'success' : 'danger'"
+        />
 
-        <div class="stat-card">
-          <div class="stat-label">Sharpe Ratio</div>
-          <div class="stat-value">{{ backtest.performance.sharpe_ratio.toFixed(2) }}</div>
-          <div class="text-xs text-gray-500 mt-2">Risk-adjusted return</div>
-        </div>
+        <StatCard
+          label="Sharpe Ratio"
+          :value="backtest.performance.sharpe_ratio.toFixed(2)"
+          change="Risk-adjusted return"
+          variant="primary"
+        />
 
-        <div class="stat-card">
-          <div class="stat-label">Max Drawdown</div>
-          <div class="stat-value negative">{{ (backtest.performance.max_drawdown * 100).toFixed(1) }}%</div>
-          <div class="text-xs text-gray-500 mt-2">Largest decline</div>
-        </div>
+        <StatCard
+          label="Max Drawdown"
+          :value="`${(backtest.performance.max_drawdown * 100).toFixed(1)}%`"
+          change="Largest decline"
+          variant="danger"
+        />
 
-        <div class="stat-card">
-          <div class="stat-label">Win Rate</div>
-          <div class="stat-value">{{ (backtest.trading.win_rate * 100).toFixed(1) }}%</div>
-          <div class="text-xs text-gray-500 mt-2">{{ backtest.trading.winning_trades }} of {{ backtest.trading.total_trades }} trades</div>
-        </div>
+        <StatCard
+          label="Win Rate"
+          :value="`${(backtest.trading.win_rate * 100).toFixed(1)}%`"
+          :change="`${backtest.trading.winning_trades} of ${backtest.trading.total_trades} trades`"
+          variant="success"
+        />
       </div>
 
       <!-- Strategy Info -->
-      <div class="card mb-8">
-        <h2 class="card-header">Strategy Information</h2>
+      <Card title="Strategy Information">
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
-            <div class="text-sm text-gray-600">Strategy</div>
-            <div class="font-medium">{{ backtest.strategy }}</div>
+            <div class="text-sm text-text-secondary mb-1">Strategy</div>
+            <div class="font-medium text-text-primary">{{ backtest.strategy }}</div>
           </div>
           <div>
-            <div class="text-sm text-gray-600">Symbol</div>
-            <div class="font-medium">{{ backtest.symbol }}</div>
+            <div class="text-sm text-text-secondary mb-1">Symbol</div>
+            <div class="font-medium text-text-primary">{{ backtest.symbol }}</div>
           </div>
           <div>
-            <div class="text-sm text-gray-600">Period</div>
-            <div class="font-medium">{{ formatDate(backtest.start_date) }} - {{ formatDate(backtest.end_date) }}</div>
+            <div class="text-sm text-text-secondary mb-1">Period</div>
+            <div class="font-medium text-text-primary">{{ formatDate(backtest.start_date) }} - {{ formatDate(backtest.end_date) }}</div>
           </div>
           <div>
-            <div class="text-sm text-gray-600">Initial Capital</div>
-            <div class="font-medium">${{ backtest.performance.initial_cash.toLocaleString() }}</div>
+            <div class="text-sm text-text-secondary mb-1">Initial Capital</div>
+            <div class="font-medium text-text-primary">${{ backtest.performance.initial_cash.toLocaleString() }}</div>
           </div>
         </div>
-      </div>
+      </Card>
 
       <!-- Charts Row -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div class="card">
-          <h3 class="card-header">Equity Curve</h3>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card title="Equity Curve" :icon="ChartBarIcon">
           <div class="h-64">
             <canvas ref="equityChartCanvas"></canvas>
           </div>
-        </div>
+        </Card>
 
-        <div class="card">
-          <h3 class="card-header">Returns Distribution</h3>
+        <Card title="Returns Distribution" :icon="ChartBarIcon">
           <div class="h-64">
             <canvas ref="returnsChartCanvas"></canvas>
           </div>
-        </div>
+        </Card>
       </div>
 
       <!-- Trading Metrics -->
-      <div class="card mb-8">
-        <h2 class="card-header">Trading Metrics</h2>
+      <Card title="Trading Metrics">
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
           <div>
-            <div class="text-sm text-gray-600">Total Trades</div>
-            <div class="text-xl font-semibold">{{ backtest.trading.total_trades }}</div>
+            <div class="text-sm text-text-secondary mb-1">Total Trades</div>
+            <div class="text-xl font-semibold text-text-primary">{{ backtest.trading.total_trades }}</div>
           </div>
           <div>
-            <div class="text-sm text-gray-600">Winning Trades</div>
-            <div class="text-xl font-semibold positive">{{ backtest.trading.winning_trades }}</div>
+            <div class="text-sm text-text-secondary mb-1">Winning Trades</div>
+            <div class="text-xl font-semibold text-accent-success">{{ backtest.trading.winning_trades }}</div>
           </div>
           <div>
-            <div class="text-sm text-gray-600">Losing Trades</div>
-            <div class="text-xl font-semibold negative">{{ backtest.trading.losing_trades }}</div>
+            <div class="text-sm text-text-secondary mb-1">Losing Trades</div>
+            <div class="text-xl font-semibold text-accent-danger">{{ backtest.trading.losing_trades }}</div>
           </div>
           <div>
-            <div class="text-sm text-gray-600">Avg Win</div>
-            <div class="text-xl font-semibold positive">${{ backtest.trading.avg_win.toFixed(2) }}</div>
+            <div class="text-sm text-text-secondary mb-1">Avg Win</div>
+            <div class="text-xl font-semibold text-accent-success">${{ backtest.trading.avg_win.toFixed(2) }}</div>
           </div>
           <div>
-            <div class="text-sm text-gray-600">Avg Loss</div>
-            <div class="text-xl font-semibold negative">${{ backtest.trading.avg_loss.toFixed(2) }}</div>
+            <div class="text-sm text-text-secondary mb-1">Avg Loss</div>
+            <div class="text-xl font-semibold text-accent-danger">${{ backtest.trading.avg_loss.toFixed(2) }}</div>
           </div>
           <div>
-            <div class="text-sm text-gray-600">Profit Factor</div>
-            <div class="text-xl font-semibold">{{ backtest.trading.profit_factor.toFixed(2) }}</div>
+            <div class="text-sm text-text-secondary mb-1">Profit Factor</div>
+            <div class="text-xl font-semibold text-text-primary">{{ backtest.trading.profit_factor.toFixed(2) }}</div>
           </div>
         </div>
-      </div>
+      </Card>
 
       <!-- Recent Trades -->
-      <div class="card">
-        <h2 class="card-header">Recent Trades</h2>
-        <div class="text-center py-8 text-gray-500">
+      <Card title="Recent Trades">
+        <div class="text-center py-8 text-text-muted">
           Trade details will be available when connected to full backtest engine
         </div>
-      </div>
+      </Card>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, nextTick } from 'vue';
-import { useRoute } from 'vue-router';
-import type { BacktestResult } from '../types';
-import api from '../services/api';
-import { useChart } from '../composables/useChart';
-import Button from '@/shared/components/ui/Button.vue';
+import { ref, onMounted, watch, nextTick } from 'vue'
+import { useRoute } from 'vue-router'
+import type { BacktestResult } from '../types'
+import api from '../services/api'
+import { useChart } from '../composables/useChart'
+import { ChartBarIcon, ArrowLeftIcon } from '@heroicons/vue/24/outline'
+import Button from '@/shared/components/ui/Button.vue'
+import Card from '@/shared/components/ui/Card.vue'
+import StatCard from '@/features/dashboard/components/StatCard.vue'
 
-const route = useRoute();
-const backtest = ref<BacktestResult | null>(null);
-const loading = ref(false);
-const error = ref<string | null>(null);
+const route = useRoute()
+const backtest = ref<BacktestResult | null>(null)
+const loading = ref(false)
+const error = ref<string | null>(null)
 
-const equityChartCanvas = ref<HTMLCanvasElement | null>(null);
-const returnsChartCanvas = ref<HTMLCanvasElement | null>(null);
+const equityChartCanvas = ref<HTMLCanvasElement | null>(null)
+const returnsChartCanvas = ref<HTMLCanvasElement | null>(null)
 
-const { createChart: createEquityChart } = useChart(equityChartCanvas);
-const { createChart: createReturnsChart } = useChart(returnsChartCanvas);
+const { createChart: createEquityChart } = useChart(equityChartCanvas)
+const { createChart: createReturnsChart } = useChart(returnsChartCanvas)
 
 onMounted(async () => {
-  await fetchBacktest();
-});
+  await fetchBacktest()
+})
 
 watch(backtest, async (newBacktest) => {
   if (newBacktest) {
-    await nextTick();
-    createCharts(newBacktest);
+    await nextTick()
+    createCharts(newBacktest)
   }
-});
+})
 
 async function fetchBacktest() {
-  loading.value = true;
-  error.value = null;
+  loading.value = true
+  error.value = null
   try {
-    const id = route.params.id as string;
-    backtest.value = await api.getBacktest(id);
+    const id = route.params.id as string
+    backtest.value = await api.getBacktest(id)
   } catch (e: any) {
-    error.value = e.message || 'Failed to fetch backtest details';
-    console.error('Failed to fetch backtest:', e);
+    error.value = e.message || 'Failed to fetch backtest details'
+    console.error('Failed to fetch backtest:', e)
   } finally {
-    loading.value = false;
+    loading.value = false
   }
 }
 
 function createCharts(bt: BacktestResult) {
   // Create mock equity curve data (in real app, this would come from backtest results)
-  const days = 30;
-  const equityData = [];
-  let equity = bt.performance.initial_cash;
+  const days = 30
+  const equityData = []
+  let equity = bt.performance.initial_cash
 
   for (let i = 0; i <= days; i++) {
     // Simulate equity growth
-    const dailyReturn = (Math.random() - 0.45) * 100; // Slight upward bias
-    equity += dailyReturn;
-    equityData.push(equity);
+    const dailyReturn = (Math.random() - 0.45) * 100 // Slight upward bias
+    equity += dailyReturn
+    equityData.push(equity)
   }
 
   // Equity Curve
@@ -201,8 +197,8 @@ function createCharts(bt: BacktestResult) {
         {
           label: 'Portfolio Value',
           data: equityData,
-          borderColor: 'rgb(37, 99, 235)',
-          backgroundColor: 'rgba(37, 99, 235, 0.1)',
+          borderColor: 'rgb(62, 207, 142)',
+          backgroundColor: 'rgba(62, 207, 142, 0.1)',
           borderWidth: 2,
           fill: true,
           tension: 0,  // Straight lines for discrete time points
@@ -239,25 +235,25 @@ function createCharts(bt: BacktestResult) {
         },
       },
     },
-  });
+  })
 
   // Returns Distribution (histogram)
-  const returns = [];
+  const returns = []
   for (let i = 0; i < 50; i++) {
-    returns.push((Math.random() - 0.5) * 10); // Random returns between -5% and 5%
+    returns.push((Math.random() - 0.5) * 10) // Random returns between -5% and 5%
   }
 
   // Create histogram bins
-  const bins = 15;
-  const min = Math.min(...returns);
-  const max = Math.max(...returns);
-  const binSize = (max - min) / bins;
-  const binCounts = new Array(bins).fill(0);
+  const bins = 15
+  const min = Math.min(...returns)
+  const max = Math.max(...returns)
+  const binSize = (max - min) / bins
+  const binCounts = new Array(bins).fill(0)
 
   returns.forEach(ret => {
-    const binIndex = Math.min(Math.floor((ret - min) / binSize), bins - 1);
-    binCounts[binIndex]++;
-  });
+    const binIndex = Math.min(Math.floor((ret - min) / binSize), bins - 1)
+    binCounts[binIndex]++
+  })
 
   createReturnsChart({
     type: 'line',
@@ -267,8 +263,8 @@ function createCharts(bt: BacktestResult) {
         {
           label: 'Frequency',
           data: binCounts,
-          borderColor: 'rgb(16, 185, 129)',
-          backgroundColor: 'rgba(16, 185, 129, 0.5)',
+          borderColor: 'rgb(62, 207, 142)',
+          backgroundColor: 'rgba(62, 207, 142, 0.5)',
           borderWidth: 2,
           fill: true,
           tension: 0.4,
@@ -303,15 +299,30 @@ function createCharts(bt: BacktestResult) {
         },
       },
     },
-  });
+  })
 }
 
 function formatDate(dateString: string): string {
-  const date = new Date(dateString);
+  const date = new Date(dateString)
   return date.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
-  });
+  })
 }
 </script>
+
+<style scoped>
+.spinner {
+  width: 3rem;
+  height: 3rem;
+  border: 3px solid var(--border-default);
+  border-top-color: var(--accent-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+</style>

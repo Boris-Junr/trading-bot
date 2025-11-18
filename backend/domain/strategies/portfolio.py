@@ -75,8 +75,8 @@ class Portfolio:
 
     @property
     def total_return(self) -> float:
-        """Calculate total return as percentage."""
-        return ((self.equity - self.initial_cash) / self.initial_cash) * 100
+        """Calculate total return as decimal fraction."""
+        return (self.equity - self.initial_cash) / self.initial_cash
 
     @property
     def total_pnl(self) -> float:
@@ -172,7 +172,7 @@ class Portfolio:
         else:  # short
             pnl = (position.entry_price - price) * position.size
 
-        pnl_pct = (pnl / (position.entry_price * position.size)) * 100
+        pnl_pct = pnl / (position.entry_price * position.size)
 
         # Calculate proceeds and commission
         proceeds = price * position.size
@@ -245,10 +245,10 @@ class Portfolio:
 
     @property
     def win_rate(self) -> float:
-        """Win rate as percentage."""
+        """Win rate as decimal fraction."""
         if self.total_trades == 0:
             return 0.0
-        return (self.winning_trades / self.total_trades) * 100
+        return self.winning_trades / self.total_trades
 
     @property
     def avg_win(self) -> float:

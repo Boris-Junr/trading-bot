@@ -494,7 +494,7 @@ class BacktestEngine:
         equity_series = equity_df['equity']
         running_max = equity_series.cummax()
         drawdown = (equity_series - running_max) / running_max
-        max_drawdown = drawdown.min() * 100
+        max_drawdown = drawdown.min()
 
         print("\n" + "=" * 70)
         print("BACKTEST RESULTS")
@@ -506,18 +506,18 @@ class BacktestEngine:
         print(f"\nPERFORMANCE:")
         print(f"  Initial Capital: ${summary['initial_cash']:,.2f}")
         print(f"  Final Equity: ${summary['equity']:,.2f}")
-        print(f"  Total Return: {summary['total_return']:.2f}%")
+        print(f"  Total Return: {summary['total_return'] * 100:.2f}%")
         print(f"  Total P&L: ${summary['total_pnl']:,.2f}")
 
         print(f"\nRISK METRICS:")
         print(f"  Sharpe Ratio: {sharpe_ratio:.2f}")
-        print(f"  Max Drawdown: {max_drawdown:.2f}%")
+        print(f"  Max Drawdown: {max_drawdown * 100:.2f}%")
 
         print(f"\nTRADING ACTIVITY:")
         print(f"  Total Trades: {summary['total_trades']}")
         print(f"  Winning Trades: {summary['winning_trades']}")
         print(f"  Losing Trades: {summary['losing_trades']}")
-        print(f"  Win Rate: {summary['win_rate']:.2f}%")
+        print(f"  Win Rate: {summary['win_rate'] * 100:.2f}%")
         print(f"  Profit Factor: {summary['profit_factor']:.2f}")
 
         print(f"\nAVERAGE TRADE:")

@@ -4,6 +4,34 @@ Pydantic models for API requests and responses
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 from datetime import datetime
+from enum import Enum
+
+
+# Task Management Models
+class TaskStatus(str, Enum):
+    """Status of a task in the system."""
+    PENDING = "pending"
+    QUEUED = "queued"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
+class Task(BaseModel):
+    """Represents a task being executed or queued."""
+    task_id: str
+    task_type: str  # 'backtest', 'model_training', 'prediction'
+    status: TaskStatus
+    description: Optional[str] = None  # Dynamic status message (e.g., "Training model...", "Generating predictions...")
+    created_at: str
+    started_at: Optional[str] = None
+    completed_at: Optional[str] = None
+    queue_position: Optional[int] = None
+    estimated_cpu_cores: Optional[float] = None
+    estimated_ram_gb: Optional[float] = None
+    progress: Optional[float] = None  # 0-100
+    result: Optional[Dict[str, Any]] = None
+    error: Optional[str] = None
 
 
 # Portfolio Models

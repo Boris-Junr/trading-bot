@@ -1,126 +1,116 @@
 <template>
   <div>
-    <!-- Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900">Portfolio</h1>
-      <p class="mt-2 text-gray-600">Detailed view of your positions and performance</p>
-    </div>
-
     <!-- Loading State -->
     <div v-if="loading" class="flex justify-center items-center py-12">
-      <div class="text-gray-500">Loading portfolio...</div>
+      <div class="spinner"></div>
     </div>
 
     <!-- Error State -->
-    <div v-else-if="error" class="card bg-red-50 border border-red-200">
-      <p class="text-red-600">{{ error }}</p>
+    <div v-else-if="error" class="p-4 bg-accent-danger/10 border border-accent-danger/20 rounded-xl text-accent-danger text-sm">
+      {{ error }}
     </div>
 
     <!-- Portfolio Content -->
-    <div v-else>
+    <div v-else class="space-y-8">
       <!-- Summary Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div class="stat-card">
-          <div class="stat-label">Total Portfolio Value</div>
-          <div class="stat-value">${{ formatNumber(totalValue) }}</div>
-          <div class="text-xs text-gray-500 mt-2">Cash: ${{ formatNumber(portfolio?.cash || 0) }}</div>
-        </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <StatCard
+          label="Total Portfolio Value"
+          :value="formatCurrency(totalValue)"
+          icon="💼"
+          variant="primary"
+        />
 
-        <div class="stat-card">
-          <div class="stat-label">Total P&L</div>
-          <div class="stat-value" :class="totalPnL >= 0 ? 'positive' : 'negative'">
-            {{ totalPnL >= 0 ? '+' : '' }}${{ formatNumber(totalPnL) }}
-          </div>
-          <div class="text-xs mt-2" :class="totalPnL >= 0 ? 'positive' : 'negative'">
-            {{ totalPnLPercent >= 0 ? '+' : '' }}{{ totalPnLPercent.toFixed(2) }}%
-          </div>
-        </div>
+        <StatCard
+          label="Total P&L"
+          :value="formatCurrency(totalPnL)"
+          :change="`${totalPnLPercent >= 0 ? '+' : ''}${totalPnLPercent.toFixed(2)}%`"
+          :variant="totalPnL >= 0 ? 'success' : 'danger'"
+          :trend="totalPnL >= 0 ? 'up' : 'down'"
+        />
 
-        <div class="stat-card">
-          <div class="stat-label">Daily P&L</div>
-          <div class="stat-value" :class="dailyPnL >= 0 ? 'positive' : 'negative'">
-            {{ dailyPnL >= 0 ? '+' : '' }}${{ formatNumber(dailyPnL) }}
-          </div>
-          <div class="text-xs mt-2" :class="dailyPnL >= 0 ? 'positive' : 'negative'">
-            {{ dailyPnLPercent >= 0 ? '+' : '' }}{{ dailyPnLPercent.toFixed(2) }}%
-          </div>
-        </div>
+        <StatCard
+          label="Daily P&L"
+          :value="formatCurrency(dailyPnL)"
+          :change="`${dailyPnLPercent >= 0 ? '+' : ''}${dailyPnLPercent.toFixed(2)}%`"
+          :variant="dailyPnL >= 0 ? 'success' : 'danger'"
+          :trend="dailyPnL >= 0 ? 'up' : 'down'"
+        />
       </div>
 
       <!-- Positions Table -->
-      <div class="card mb-8">
-        <div class="flex justify-between items-center mb-6">
-          <h2 class="card-header">Active Positions</h2>
+      <Card title="Active Positions" :icon="BriefcaseIcon">
+        <template #actions>
           <Button @click="refreshPortfolio" variant="secondary" size="sm">
             Refresh
           </Button>
+        </template>
+
+        <div v-if="!hasPositions" class="text-center py-12">
+          <BriefcaseIcon class="w-16 h-16 mx-auto text-text-muted mb-4" />
+          <p class="text-text-secondary">No active positions</p>
         </div>
 
-        <div v-if="!hasPositions" class="text-center py-8 text-gray-500">
-          No active positions
-        </div>
+        <Table v-else>
+          <template #header>
+            <TableHeader>Symbol</TableHeader>
+            <TableHeader>Side</TableHeader>
+            <TableHeader align="right">Quantity</TableHeader>
+            <TableHeader align="right">Entry Price</TableHeader>
+            <TableHeader align="right">Current Price</TableHeader>
+            <TableHeader align="right">P&L</TableHeader>
+            <TableHeader align="right">P&L %</TableHeader>
+            <TableHeader>Opened</TableHeader>
+          </template>
 
-        <div v-else class="table-container">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Symbol</th>
-                <th>Side</th>
-                <th>Quantity</th>
-                <th>Entry Price</th>
-                <th>Current Price</th>
-                <th>P&L</th>
-                <th>P&L %</th>
-                <th>Opened</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(position, index) in portfolio?.positions" :key="index">
-                <td class="font-medium text-gray-900">{{ position.symbol }}</td>
-                <td>
-                  <span
-                    class="px-2 py-1 text-xs font-medium rounded"
-                    :class="position.side === 'long' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
-                  >
-                    {{ position.side.toUpperCase() }}
-                  </span>
-                </td>
-                <td>{{ position.quantity }}</td>
-                <td>${{ position.entry_price.toFixed(2) }}</td>
-                <td>${{ position.current_price.toFixed(2) }}</td>
-                <td :class="position.pnl >= 0 ? 'positive' : 'negative'">
-                  {{ position.pnl >= 0 ? '+' : '' }}${{ formatNumber(position.pnl) }}
-                </td>
-                <td :class="position.pnl_pct >= 0 ? 'positive' : 'negative'">
-                  {{ position.pnl_pct >= 0 ? '+' : '' }}{{ position.pnl_pct.toFixed(2) }}%
-                </td>
-                <td class="text-gray-600">{{ formatDate(position.opened_at) }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+          <TableRow v-for="(position, index) in portfolio?.positions" :key="index">
+            <TableCell bold>{{ position.symbol }}</TableCell>
+            <TableCell>
+              <Badge :variant="position.side === 'long' ? 'success' : 'danger'" size="sm">
+                {{ position.side.toUpperCase() }}
+              </Badge>
+            </TableCell>
+            <TableCell align="right" mono>{{ position.quantity }}</TableCell>
+            <TableCell align="right" mono>${{ position.entry_price.toFixed(2) }}</TableCell>
+            <TableCell align="right" mono>${{ position.current_price.toFixed(2) }}</TableCell>
+            <TableCell align="right" mono :class="position.pnl >= 0 ? 'text-accent-success' : 'text-accent-danger'">
+              {{ position.pnl >= 0 ? '+' : '' }}${{ formatNumber(position.pnl) }}
+            </TableCell>
+            <TableCell align="right" mono :class="position.pnl_pct >= 0 ? 'text-accent-success' : 'text-accent-danger'">
+              {{ position.pnl_pct >= 0 ? '+' : '' }}{{ (position.pnl_pct * 100).toFixed(2) }}%
+            </TableCell>
+            <TableCell>{{ formatDate(position.opened_at) }}</TableCell>
+          </TableRow>
+        </Table>
+      </Card>
 
       <!-- Portfolio History Chart -->
-      <div class="card">
-        <h2 class="card-header">Portfolio Value History (30 Days)</h2>
+      <Card title="Portfolio Value History (30 Days)" :icon="ChartBarIcon">
         <div class="h-64">
           <canvas ref="historyChartCanvas"></canvas>
         </div>
-      </div>
+      </Card>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue';
-import { usePortfolioStore } from '../stores/portfolio';
-import { storeToRefs } from 'pinia';
-import { useChart } from '../composables/useChart';
-import api from '../services/api';
-import Button from '@/shared/components/ui/Button.vue';
+import { ref, onMounted, nextTick } from 'vue'
+import { usePortfolioStore } from '../stores/portfolio'
+import { storeToRefs } from 'pinia'
+import { useChart } from '../composables/useChart'
+import api from '../services/api'
+import { BriefcaseIcon, ChartBarIcon } from '@heroicons/vue/24/outline'
+import Card from '@/shared/components/ui/Card.vue'
+import Button from '@/shared/components/ui/Button.vue'
+import Badge from '@/shared/components/ui/Badge.vue'
+import StatCard from '@/features/dashboard/components/StatCard.vue'
+import Table from '@/shared/components/ui/Table.vue'
+import TableHeader from '@/shared/components/ui/TableHeader.vue'
+import TableRow from '@/shared/components/ui/TableRow.vue'
+import TableCell from '@/shared/components/ui/TableCell.vue'
 
-const portfolioStore = usePortfolioStore();
+const portfolioStore = usePortfolioStore()
 const {
   portfolio,
   loading,
@@ -131,39 +121,39 @@ const {
   dailyPnL,
   dailyPnLPercent,
   hasPositions,
-} = storeToRefs(portfolioStore);
+} = storeToRefs(portfolioStore)
 
-const historyChartCanvas = ref<HTMLCanvasElement | null>(null);
-const { createChart } = useChart(historyChartCanvas);
+const historyChartCanvas = ref<HTMLCanvasElement | null>(null)
+const { createChart } = useChart(historyChartCanvas)
 
 onMounted(async () => {
-  await refreshPortfolio();
-  await loadHistory();
-});
+  await refreshPortfolio()
+  await loadHistory()
+})
 
 async function refreshPortfolio() {
   try {
-    await portfolioStore.fetchPortfolio();
+    await portfolioStore.fetchPortfolio()
   } catch (e) {
-    console.error('Failed to fetch portfolio:', e);
+    console.error('Failed to fetch portfolio:', e)
   }
 }
 
 async function loadHistory() {
   try {
-    const history = await api.getPortfolioHistory(30);
-    await nextTick();
-    createHistoryChart(history);
+    const history = await api.getPortfolioHistory(30)
+    await nextTick()
+    createHistoryChart(history)
   } catch (e) {
-    console.error('Failed to fetch portfolio history:', e);
+    console.error('Failed to fetch portfolio history:', e)
   }
 }
 
 function createHistoryChart(history: any[]) {
-  if (!historyChartCanvas.value || !history.length) return;
+  if (!historyChartCanvas.value || !history.length) return
 
-  const labels = history.map(h => new Date(h.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-  const values = history.map(h => h.total_value);
+  const labels = history.map(h => new Date(h.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }))
+  const values = history.map(h => h.total_value)
 
   createChart({
     type: 'line',
@@ -173,13 +163,13 @@ function createHistoryChart(history: any[]) {
         {
           label: 'Portfolio Value',
           data: values,
-          borderColor: 'rgb(34, 197, 94)',
-          backgroundColor: 'rgba(34, 197, 94, 0.1)',
+          borderColor: 'rgb(62, 207, 142)',
+          backgroundColor: 'rgba(62, 207, 142, 0.1)',
           borderWidth: 2,
           fill: true,
-          tension: 0,  // Straight lines for discrete time points
-          pointRadius: 2,
-          pointHoverRadius: 5,
+          tension: 0.4,
+          pointRadius: 3,
+          pointHoverRadius: 6,
         },
       ],
     },
@@ -195,7 +185,7 @@ function createHistoryChart(history: any[]) {
           intersect: false,
           callbacks: {
             label: (context) => {
-              return `Value: $${context.parsed.y.toLocaleString()}`;
+              return `Value: $${context.parsed.y.toLocaleString()}`
             },
           },
         },
@@ -220,23 +210,47 @@ function createHistoryChart(history: any[]) {
         intersect: false,
       },
     },
-  });
+  })
+}
+
+function formatCurrency(value: number): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value)
 }
 
 function formatNumber(value: number): string {
   return Math.abs(value).toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  });
+  })
 }
 
 function formatDate(dateString: string): string {
-  const date = new Date(dateString);
+  const date = new Date(dateString)
   return date.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-  });
+  })
 }
 </script>
+
+<style scoped>
+.spinner {
+  width: 3rem;
+  height: 3rem;
+  border: 3px solid var(--border-default);
+  border-top-color: var(--accent-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+</style>

@@ -6,29 +6,29 @@
 @layer theme {
   :root {
     /* === BACKGROUND COLORS === */
-    --bg-primary: #0a0e1a;
-    --bg-secondary: #111827;
-    --bg-tertiary: #1f2937;
-    --bg-hover: #374151;
+    --bg-primary: #1c1c1c;          /* Supabase dark primary */
+    --bg-secondary: #232323;        /* Supabase dark panel */
+    --bg-tertiary: #161616;         /* Supabase dark alt */
+    --bg-hover: #2a2a2a;
 
     /* Glassmorphism */
-    --glass-bg: rgba(17, 24, 39, 0.7);
+    --glass-bg: rgba(35, 35, 35, 0.7);
     --glass-border: rgba(255, 255, 255, 0.1);
 
     /* === ACCENT COLORS === */
-    --accent-primary: #3ECF8E;      /* Supabase brand green */
-    --accent-primary-dim: #2da771;
+    --accent-primary: #3ecf8e;      /* Supabase brand primary */
+    --accent-primary-dim: #34b97d;  /* Supabase brand accent */
     --accent-secondary: #c44569;    /* Deep rose */
     --accent-success: #4ADE80;      /* Bright success green */
     --accent-danger: #c0392b;       /* Deep red */
     --accent-warning: #d68910;      /* Deep amber */
-    --accent-info: #3ECF8E;         /* Supabase green */
+    --accent-info: #3ecf8e;         /* Supabase green */
 
     /* === TEXT COLORS === */
-    --text-primary: #e5e7eb;
-    --text-secondary: #9ca3af;
-    --text-muted: #6b7280;
-    --text-inverse: #0a0e1a;
+    --text-primary: #ededed;        /* Supabase dark body text */
+    --text-secondary: #a0a0a0;      /* Supabase dark secondary text */
+    --text-muted: #6e7681;
+    --text-inverse: #1c1c1c;
 
     /* === BORDER & EFFECTS === */
     --border-default: rgba(255, 255, 255, 0.1);
@@ -69,12 +69,36 @@ body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  line-height: 1.5;
+  line-height: 1.6;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+h1 {
+  font-size: 2.25rem;
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 1.875rem;
+}
+
+h3 {
+  font-size: 1.5rem;
 }
 
 /* Monospace for numbers and data */
 .font-mono {
   font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  letter-spacing: -0.02em;
 }
 
 /* === SCROLLBAR STYLING === */

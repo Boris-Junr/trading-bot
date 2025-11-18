@@ -13,15 +13,63 @@ export const useBacktestStore = defineStore('backtest', () => {
 
   // Getters
   const sortedBacktests = computed(() => {
-    return [...backtests.value].sort((a, b) =>
-      new Date(b.end_date).getTime() - new Date(a.end_date).getTime()
-    );
+    return [...backtests.value].sort((a, b) => {
+      // Sort by creation date (when the backtest was run), most recent first
+      let dateA: number;
+      let dateB: number;
+
+      // Try to get created_at, otherwise parse from ID, otherwise fall back to end_date
+      if (a.created_at) {
+        dateA = new Date(a.created_at).getTime();
+      } else if (a.id) {
+        // Parse timestamp from ID format: Strategy_Symbol_YYYYMMDD_HHMMSS
+        const match = a.id.match(/_(\d{8})_(\d{6})$/);
+        if (match) {
+          const [, dateStr, timeStr] = match;
+          const year = dateStr.substring(0, 4);
+          const month = dateStr.substring(4, 6);
+          const day = dateStr.substring(6, 8);
+          const hour = timeStr.substring(0, 2);
+          const minute = timeStr.substring(2, 4);
+          const second = timeStr.substring(4, 6);
+          dateA = new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}`).getTime();
+        } else {
+          dateA = new Date(a.end_date).getTime();
+        }
+      } else {
+        dateA = new Date(a.end_date).getTime();
+      }
+
+      if (b.created_at) {
+        dateB = new Date(b.created_at).getTime();
+      } else if (b.id) {
+        const match = b.id.match(/_(\d{8})_(\d{6})$/);
+        if (match) {
+          const [, dateStr, timeStr] = match;
+          const year = dateStr.substring(0, 4);
+          const month = dateStr.substring(4, 6);
+          const day = dateStr.substring(6, 8);
+          const hour = timeStr.substring(0, 2);
+          const minute = timeStr.substring(2, 4);
+          const second = timeStr.substring(4, 6);
+          dateB = new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}`).getTime();
+        } else {
+          dateB = new Date(b.end_date).getTime();
+        }
+      } else {
+        dateB = new Date(b.end_date).getTime();
+      }
+
+      return dateB - dateA; // Larger (more recent) timestamp comes first
+    });
   });
 
   const bestBacktest = computed(() => {
-    if (backtests.value.length === 0) return null;
-    return [...backtests.value].sort((a, b) =>
-      b.performance.total_return - a.performance.total_return
+    // Filter out failed backtests before finding the best one
+    const successfulBacktests = backtests.value.filter(bt => bt.status !== 'failed' && bt.performance);
+    if (successfulBacktests.length === 0) return null;
+    return [...successfulBacktests].sort((a, b) =>
+      b.performance!.total_return - a.performance!.total_return
     )[0];
   });
 

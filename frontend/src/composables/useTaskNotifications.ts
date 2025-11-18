@@ -1,0 +1,92 @@
+import { watch } from 'vue'
+import { useTaskManagerStore } from '@/stores/taskManager'
+import { useNotificationStore } from '@/stores/notifications'
+import type { Task } from '@/types'
+
+export function useTaskNotifications() {
+  const taskManager = useTaskManagerStore()
+  const notifications = useNotificationStore()
+
+  // Track previous task states
+  const previousStates = new Map<string, Task['status']>()
+
+  // Watch for task state changes
+  watch(
+    () => taskManager.tasks,
+    (newTasks) => {
+      newTasks.forEach((task, taskId) => {
+        const previousStatus = previousStates.get(taskId)
+        const currentStatus = task.status
+
+        // Skip if status hasn't changed
+        if (previousStatus === currentStatus) {
+          return
+        }
+
+        // Update tracked state
+        previousStates.set(taskId, currentStatus)
+
+        // Create notifications based on state transitions
+        const taskTypeName = formatTaskType(task.task_type)
+
+        // Task queued
+        if (currentStatus === 'queued' && previousStatus !== 'queued') {
+          notifications.warning(
+            'Task Queued',
+            `${taskTypeName} queued at position #${task.queue_position || '?'}`,
+            4000
+          )
+        }
+
+        // Task started running
+        if (currentStatus === 'running' && previousStatus === 'queued') {
+          notifications.info(
+            'Task Started',
+            `${taskTypeName} is now running`,
+            3000
+          )
+        }
+
+        // Task completed
+        if (currentStatus === 'completed' && previousStatus === 'running') {
+          notifications.success(
+            'Task Completed',
+            `${taskTypeName} finished successfully`,
+            5000
+          )
+        }
+
+        // Task failed
+        if (currentStatus === 'failed') {
+          notifications.error(
+            'Task Failed',
+            task.error || `${taskTypeName} failed to complete`,
+            8000
+          )
+        }
+      })
+
+      // Clean up tracking for removed tasks
+      const currentTaskIds = new Set(newTasks.keys())
+      previousStates.forEach((_, taskId) => {
+        if (!currentTaskIds.has(taskId)) {
+          previousStates.delete(taskId)
+        }
+      })
+    },
+    { deep: true }
+  )
+
+  function formatTaskType(type: string): string {
+    const typeMap: Record<string, string> = {
+      'backtest': 'Backtest',
+      'model_training': 'Model Training',
+      'prediction': 'Prediction'
+    }
+    return typeMap[type] || type
+  }
+
+  return {
+    // Empty return - this composable works via side effects (watchers)
+  }
+}

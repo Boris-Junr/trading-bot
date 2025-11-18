@@ -135,26 +135,24 @@ class MLPredictiveStrategy(Strategy):
         elapsed = time.time() - start_time
         print(f"[STRATEGY] Feature pre-computation complete in {elapsed:.2f}s ({len(full_data)/elapsed:.0f} bars/sec)")
 
-    def _calculate_setup_score(self, df: pd.DataFrame) -> float:
+    def _check_triggers(self, df: pd.DataFrame) -> tuple[bool, str]:
         """
-        Fast pre-filter using technical indicators to identify potential setups.
+        Check if any simple trigger conditions are met.
 
-        Returns score from 0 to 1. Higher score = more likely to be a trading opportunity.
-        Only call expensive ML model if score exceeds threshold.
+        Uses a trigger-based approach: ANY trigger firing → call ML for final decision
+        This generates more trading opportunities compared to requiring all conditions.
 
-        This dramatically reduces ML calls from 42,000 to ~2,000-5,000 per backtest.
+        Returns:
+            (trigger_fired: bool, trigger_name: str)
         """
         if len(df) < 50:
-            return 0.0
+            return False, "insufficient_data"
 
-        score = 0.0
-        weights_sum = 0.0
-
-        # Get latest bars for analysis
         recent = df.tail(50)
         current_close = recent['close'].iloc[-1]
 
-        # 1. RSI - Check for oversold/overbought (weight: 0.25)
+        # TRIGGER 1: RSI Extremes (Oversold/Overbought)
+        # Simple mean reversion setup - 1 indicator
         rsi_period = 14
         if len(recent) >= rsi_period:
             delta = recent['close'].diff()
@@ -164,62 +162,90 @@ class MLPredictiveStrategy(Strategy):
             rsi = 100 - (100 / (1 + rs))
             current_rsi = rsi.iloc[-1]
 
-            # Score based on extreme RSI (potential reversal zones)
-            if current_rsi < 35:  # Oversold - potential buy
-                score += 0.25 * (35 - current_rsi) / 35
-            elif current_rsi > 65:  # Overbought - potential sell
-                score += 0.25 * (current_rsi - 65) / 35
-            weights_sum += 0.25
+            # Trigger on extreme RSI
+            if current_rsi < 30 or current_rsi > 70:
+                return True, f"rsi_extreme_{current_rsi:.1f}"
 
-        # 2. MACD Crossover - Check for momentum shift (weight: 0.30)
+        # TRIGGER 2: MACD Crossover
+        # Simple momentum setup - 1 indicator
         if len(recent) >= 26:
             ema12 = recent['close'].ewm(span=12, adjust=False).mean()
             ema26 = recent['close'].ewm(span=26, adjust=False).mean()
             macd = ema12 - ema26
             signal_line = macd.ewm(span=9, adjust=False).mean()
 
-            # Check for recent crossover (last 3 bars)
-            macd_recent = macd.tail(3).values
-            signal_recent = signal_line.tail(3).values
+            macd_vals = macd.tail(2).values
+            signal_vals = signal_line.tail(2).values
 
-            # Bullish crossover or strong momentum
-            if macd_recent[-1] > signal_recent[-1]:
-                crossover_strength = abs(macd_recent[-1] - signal_recent[-1])
-                score += 0.30 * min(1.0, crossover_strength / (current_close * 0.001))
-            # Bearish crossover
-            elif macd_recent[-1] < signal_recent[-1]:
-                crossover_strength = abs(macd_recent[-1] - signal_recent[-1])
-                score += 0.30 * min(1.0, crossover_strength / (current_close * 0.001))
-            weights_sum += 0.30
+            # Trigger on fresh crossover (happened in last bar)
+            if (macd_vals[-2] <= signal_vals[-2] and macd_vals[-1] > signal_vals[-1]):
+                return True, "macd_bullish_cross"
+            if (macd_vals[-2] >= signal_vals[-2] and macd_vals[-1] < signal_vals[-1]):
+                return True, "macd_bearish_cross"
 
-        # 3. Volume Spike - Unusual volume indicates potential opportunity (weight: 0.20)
+        # TRIGGER 3: Volume Spike + Price Move
+        # 2 indicators - confirms market interest
         if 'volume' in recent.columns and len(recent) >= 20:
             avg_volume = recent['volume'].rolling(window=20).mean().iloc[-1]
             current_volume = recent['volume'].iloc[-1]
 
             if avg_volume > 0:
                 volume_ratio = current_volume / avg_volume
-                # Score based on volume spike (1.5x to 3x+ normal volume)
-                if volume_ratio > 1.5:
-                    score += 0.20 * min(1.0, (volume_ratio - 1.5) / 1.5)
-                weights_sum += 0.20
+                price_change = abs(current_close / recent['close'].iloc[-2] - 1)
 
-        # 4. Price Momentum - Strong directional movement (weight: 0.25)
+                # Trigger on volume spike (2x) + significant price move (>0.3%)
+                if volume_ratio > 2.0 and price_change > 0.003:
+                    return True, f"volume_spike_{volume_ratio:.1f}x"
+
+        # TRIGGER 4: Strong Momentum
+        # Price action setup - 1 concept
         if len(recent) >= 10:
-            # Calculate momentum over different periods
             momentum_5 = (current_close / recent['close'].iloc[-6] - 1) if len(recent) >= 6 else 0
-            momentum_10 = (current_close / recent['close'].iloc[-11] - 1) if len(recent) >= 11 else 0
 
-            # Strong momentum in either direction
-            avg_momentum = abs(momentum_5 + momentum_10) / 2
-            if avg_momentum > 0.002:  # > 0.2% momentum
-                score += 0.25 * min(1.0, avg_momentum / 0.01)  # Cap at 1% momentum
-            weights_sum += 0.25
+            # Trigger on strong 5-bar momentum (>0.5%)
+            if abs(momentum_5) > 0.005:
+                direction = "bullish" if momentum_5 > 0 else "bearish"
+                return True, f"strong_momentum_{direction}_{abs(momentum_5)*100:.2f}%"
 
-        # Normalize score
-        if weights_sum > 0:
-            return score / weights_sum
-        return 0.0
+        # TRIGGER 5: Bollinger Band Squeeze + Breakout
+        # 2-3 indicators - volatility breakout setup
+        if len(recent) >= 20:
+            sma20 = recent['close'].rolling(window=20).mean()
+            std20 = recent['close'].rolling(window=20).std()
+            upper_band = sma20 + (2 * std20)
+            lower_band = sma20 - (2 * std20)
+
+            bb_width = (upper_band - lower_band) / sma20
+            avg_bb_width = bb_width.rolling(window=20).mean().iloc[-1]
+            current_bb_width = bb_width.iloc[-1]
+
+            # Squeeze: BB width < 80% of average width
+            is_squeeze = current_bb_width < avg_bb_width * 0.8
+
+            # Breakout: Price broke above upper or below lower band
+            broke_upper = current_close > upper_band.iloc[-1]
+            broke_lower = current_close < lower_band.iloc[-1]
+
+            if is_squeeze and (broke_upper or broke_lower):
+                direction = "up" if broke_upper else "down"
+                return True, f"bb_breakout_{direction}"
+
+        # TRIGGER 6: Moving Average Cross
+        # Classic trend-following setup - 2 indicators
+        if len(recent) >= 50:
+            sma20 = recent['close'].rolling(window=20).mean()
+            sma50 = recent['close'].rolling(window=50).mean()
+
+            sma20_vals = sma20.tail(2).values
+            sma50_vals = sma50.tail(2).values
+
+            # Golden cross or death cross
+            if (sma20_vals[-2] <= sma50_vals[-2] and sma20_vals[-1] > sma50_vals[-1]):
+                return True, "golden_cross"
+            if (sma20_vals[-2] >= sma50_vals[-2] and sma20_vals[-1] < sma50_vals[-1]):
+                return True, "death_cross"
+
+        return False, "no_trigger"
 
     def generate_signal(self, df: pd.DataFrame) -> Signal:
         """
@@ -269,24 +295,25 @@ class MLPredictiveStrategy(Strategy):
                 confidence=0.0
             )
 
-        # PERFORMANCE OPTIMIZATION: Use fast pre-filter before expensive ML call
-        # This reduces ML calls from 42K to ~2-5K per backtest (10-20x speedup!)
+        # PERFORMANCE OPTIMIZATION: Use fast trigger-based pre-filter before expensive ML call
+        # This reduces ML calls by checking simple technical setups first
+        trigger_name = None  # Track which trigger fired (if any)
         if self.use_prefilter:
-            setup_score = self._calculate_setup_score(df)
+            trigger_fired, trigger_name = self._check_triggers(df)
 
-            # If setup score is too low, skip ML prediction entirely
-            if setup_score < self.prefilter_threshold:
+            # If no trigger fired, skip ML prediction entirely
+            if not trigger_fired:
                 return Signal(
                     type=SignalType.HOLD,
                     timestamp=df.index[-1],
                     price=df['close'].iloc[-1],
                     confidence=0.0,
-                    metadata={'setup_score': setup_score, 'reason': 'prefilter_rejected'}
+                    metadata={'trigger': trigger_name, 'reason': 'no_trigger'}
                 )
-            # Otherwise, setup looks promising - validate with ML
-            # (This happens only 5-10% of the time)
+            # Otherwise, a trigger fired - validate with ML
+            # Trigger name will be included in final signal metadata
 
-        # Get predictions (EXPENSIVE - only called when pre-filter passes)
+        # Get predictions (EXPENSIVE - only called when pre-filter passes or if prefilter disabled)
         try:
             self._ml_calls += 1  # Track expensive ML calls
 
@@ -368,21 +395,27 @@ class MLPredictiveStrategy(Strategy):
             target_price = current_price * (1 + max_return)
             stop_price = current_price * (1 - self.risk_per_trade)
 
+            metadata = {
+                'predicted_avg_return': avg_return,
+                'predicted_max_return': max_return,
+                'predicted_min_return': min_return,
+                'return_std': return_std,
+                'consecutive_positive': consecutive_positive,
+                'target_price': target_price,
+                'stop_loss': stop_price,
+                'prediction_window': prediction_steps
+            }
+
+            # Include trigger info if available
+            if trigger_name:
+                metadata['trigger'] = trigger_name
+
             return Signal(
                 type=SignalType.BUY,
                 timestamp=current_time,
                 price=current_price,
                 confidence=confidence,
-                metadata={
-                    'predicted_avg_return': avg_return,
-                    'predicted_max_return': max_return,
-                    'predicted_min_return': min_return,
-                    'return_std': return_std,
-                    'consecutive_positive': consecutive_positive,
-                    'target_price': target_price,
-                    'stop_loss': stop_price,
-                    'prediction_window': prediction_steps
-                }
+                metadata=metadata
             )
 
         # SELL signal: Strong downward prediction
@@ -391,21 +424,27 @@ class MLPredictiveStrategy(Strategy):
             target_price = current_price * (1 + min_return)
             stop_price = current_price * (1 + self.risk_per_trade)
 
+            metadata = {
+                'predicted_avg_return': avg_return,
+                'predicted_max_return': max_return,
+                'predicted_min_return': min_return,
+                'return_std': return_std,
+                'consecutive_negative': consecutive_negative,
+                'target_price': target_price,
+                'stop_loss': stop_price,
+                'prediction_window': prediction_steps
+            }
+
+            # Include trigger info if available
+            if trigger_name:
+                metadata['trigger'] = trigger_name
+
             return Signal(
                 type=SignalType.SELL,
                 timestamp=current_time,
                 price=current_price,
                 confidence=confidence,
-                metadata={
-                    'predicted_avg_return': avg_return,
-                    'predicted_max_return': max_return,
-                    'predicted_min_return': min_return,
-                    'return_std': return_std,
-                    'consecutive_negative': consecutive_negative,
-                    'target_price': target_price,
-                    'stop_loss': stop_price,
-                    'prediction_window': prediction_steps
-                }
+                metadata=metadata
             )
 
         # HOLD: Prediction not strong enough
@@ -506,6 +545,26 @@ class MLPredictiveStrategy(Strategy):
     def get_name(self) -> str:
         """Return strategy name."""
         return "MLPredictiveStrategy"
+
+    @classmethod
+    def get_metadata(cls) -> dict:
+        """Return strategy metadata for auto-discovery."""
+        return {
+            'name': 'MLPredictive',
+            'label': 'ML Predictive Strategy',
+            'description': 'Uses machine learning to predict future price movements and generates signals based on expected returns',
+            'requires_model': True,
+            'category': 'machine_learning',
+            'parameters': {
+                'model_path': {'type': 'string', 'required': True, 'description': 'Path to trained model'},
+                'min_predicted_return': {'type': 'float', 'default': 0.002, 'description': 'Minimum predicted return (0.2%)'},
+                'confidence_threshold': {'type': 'float', 'default': 0.6, 'description': 'Minimum confidence (0-1)'},
+                'prediction_window': {'type': 'int', 'default': 60, 'description': 'Prediction window in minutes'},
+                'risk_per_trade': {'type': 'float', 'default': 0.02, 'description': 'Risk per trade (2%)'},
+                'use_prefilter': {'type': 'bool', 'default': True, 'description': 'Use technical indicator pre-filter'},
+                'prefilter_threshold': {'type': 'float', 'default': 0.3, 'description': 'Minimum setup score (0-1)'}
+            }
+        }
 
     def __repr__(self) -> str:
         """String representation of the strategy."""

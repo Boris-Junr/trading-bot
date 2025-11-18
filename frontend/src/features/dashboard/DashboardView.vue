@@ -1,22 +1,7 @@
 <template>
-  <div class="space-y-6">
-    <!-- Page Header -->
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-3xl font-bold text-gradient">Dashboard</h1>
-        <p class="mt-1 text-text-secondary">Real-time trading bot performance</p>
-      </div>
-      <div class="flex items-center gap-3">
-        <Badge variant="success" dot>Live</Badge>
-        <Button variant="secondary" size="sm">
-          <ArrowPathIcon class="w-4 h-4" />
-          Refresh
-        </Button>
-      </div>
-    </div>
-
+  <div class="dashboard-container">
     <!-- Stats Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="stats-grid">
       <StatCard
         label="Portfolio Value"
         :value="formatCurrency(totalValue)"
@@ -46,21 +31,25 @@
     </div>
 
     <!-- Charts Row -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="charts-grid">
       <Card title="Portfolio Value" :icon="ChartBarIcon">
-        <div class="h-64 flex items-center justify-center bg-bg-tertiary rounded-lg border border-border-default">
-          <div class="text-center">
-            <SparklesIcon class="w-12 h-12 mx-auto text-accent-primary mb-2" />
-            <p class="text-text-secondary">Chart visualization coming soon</p>
+        <div class="chart-placeholder">
+          <div class="placeholder-content">
+            <div class="placeholder-icon">
+              <ChartBarIcon class="w-8 h-8" />
+            </div>
+            <p class="placeholder-text">Chart visualization coming soon</p>
           </div>
         </div>
       </Card>
 
       <Card title="Performance Overview" :icon="ChartPieIcon">
-        <div class="h-64 flex items-center justify-center bg-bg-tertiary rounded-lg border border-border-default">
-          <div class="text-center">
-            <SparklesIcon class="w-12 h-12 mx-auto text-accent-secondary mb-2" />
-            <p class="text-text-secondary">Performance metrics loading...</p>
+        <div class="chart-placeholder">
+          <div class="placeholder-content">
+            <div class="placeholder-icon">
+              <ChartPieIcon class="w-8 h-8" />
+            </div>
+            <p class="placeholder-text">Performance metrics loading...</p>
           </div>
         </div>
       </Card>
@@ -91,9 +80,17 @@
         <div
           v-for="(position, index) in portfolio?.positions"
           :key="index"
-          class="position-card group"
+          class="position-card group relative"
+          @mousemove="(e) => handleCardMouseMove(e, index)"
+          @mouseleave="() => handleCardMouseLeave(index)"
         >
-          <div class="flex items-center justify-between">
+          <!-- Animated background glow -->
+          <div
+            class="card-glow"
+            :style="cardGlowStyles[index]"
+          ></div>
+
+          <div class="flex items-center justify-between relative z-10">
             <div class="flex items-center gap-4">
               <div class="position-icon">
                 <ChartBarIcon class="w-5 h-5" />
@@ -132,23 +129,11 @@
       </div>
     </Card>
 
-    <!-- Quick Actions -->
-    <div class="flex gap-4">
-      <Button variant="primary" :icon-left="ChartBarIcon" @click="$router.push('/backtests')">
-        Run Backtest
-      </Button>
-      <Button variant="secondary" :icon-left="SparklesIcon" @click="$router.push('/predictions')">
-        View Predictions
-      </Button>
-      <Button variant="ghost" :icon-left="CogIcon" @click="$router.push('/strategies')">
-        Configure Strategy
-      </Button>
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, reactive } from 'vue'
 import { usePortfolioStore } from '@/stores/portfolio'
 import Card from '@/shared/components/ui/Card.vue'
 import Button from '@/shared/components/ui/Button.vue'
@@ -169,6 +154,24 @@ const loading = ref(true)
 
 const portfolio = computed(() => portfolioStore.portfolio)
 const hasPositions = computed(() => portfolio.value?.positions && portfolio.value.positions.length > 0)
+
+// Mouse tracking for card glow effects
+const cardGlowStyles = reactive<Record<number, { background: string }>>({})
+
+const handleCardMouseMove = (event: MouseEvent, index: number) => {
+  const card = event.currentTarget as HTMLElement
+  const rect = card.getBoundingClientRect()
+  const mouseX = ((event.clientX - rect.left) / rect.width) * 100
+  const mouseY = ((event.clientY - rect.top) / rect.height) * 100
+
+  cardGlowStyles[index] = {
+    background: `radial-gradient(circle at ${mouseX}% ${mouseY}%, var(--accent-primary) 0%, transparent 35%)`
+  }
+}
+
+const handleCardMouseLeave = (index: number) => {
+  // Don't reset position - let opacity handle the fade out
+}
 
 const totalValue = computed(() => portfolio.value?.total_value || 100000)
 const dailyPnL = computed(() => portfolio.value?.daily_pnl || 1250.50)
@@ -198,23 +201,90 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+  gap: 1.5rem;
+}
+
+.chart-placeholder {
+  height: 20rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary);
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-default);
+}
+
+.placeholder-content {
+  text-align: center;
+}
+
+.placeholder-icon {
+  width: 4rem;
+  height: 4rem;
+  margin: 0 auto 1rem;
+  border-radius: 0.75rem;
+  background: rgba(62, 207, 142, 0.08);
+  border: 1px solid rgba(62, 207, 142, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-primary);
+}
+
+.placeholder-text {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
 .position-card {
-  padding: 1rem;
-  border-radius: 0.5rem;
+  padding: 1.25rem;
+  border-radius: 0.75rem;
   background: var(--bg-tertiary);
   border: 1px solid var(--border-default);
   transition: all var(--transition-base);
+  overflow: hidden;
 }
 
 .position-card:hover {
   border-color: var(--accent-primary);
   background: var(--bg-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.card-glow {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 300ms ease;
+  border-radius: 0.75rem;
+  filter: blur(0.3rem);
+  pointer-events: none;
+}
+
+.position-card:hover .card-glow {
+  opacity: 1;
 }
 
 .position-icon {
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 0.5rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.75rem;
   background: rgba(62, 207, 142, 0.1);
   border: 1px solid rgba(62, 207, 142, 0.2);
   display: flex;
@@ -227,5 +297,6 @@ onMounted(async () => {
 .position-card:hover .position-icon {
   background: rgba(62, 207, 142, 0.15);
   border-color: rgba(62, 207, 142, 0.4);
+  transform: scale(1.05);
 }
 </style>

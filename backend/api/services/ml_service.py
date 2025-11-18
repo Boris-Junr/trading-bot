@@ -10,6 +10,8 @@ import pandas as pd
 import numpy as np
 import pickle
 import os
+import json
+import uuid
 
 # Add backend to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -26,6 +28,8 @@ class MLService:
         """Initialize ML service"""
         self.models_dir = Path(__file__).parent.parent.parent / 'analysis' / 'models' / 'saved'
         self.models_dir.mkdir(parents=True, exist_ok=True)
+        self.predictions_dir = Path(__file__).parent.parent.parent / 'runtime' / 'output' / 'predictions'
+        self.predictions_dir.mkdir(parents=True, exist_ok=True)
         self.fetcher = HistoricalDataFetcher(
             trading_mode='paper',
             use_cache=True,
@@ -487,6 +491,139 @@ class MLService:
         smoothness = 1.0 / (1.0 + variance)
 
         return min(1.0, smoothness)
+
+    def create_prediction_task(
+        self,
+        symbol: str,
+        timeframe: str,
+        prediction_id: Optional[str] = None,
+        status: str = 'running'
+    ) -> str:
+        """
+        Create a prediction task entry (for tracking before completion)
+
+        Args:
+            symbol: Trading symbol
+            timeframe: Timeframe
+            prediction_id: Optional prediction ID (generates new one if not provided)
+            status: Task status (running, queued, etc.)
+
+        Returns:
+            Prediction ID
+        """
+        if prediction_id is None:
+            prediction_id = str(uuid.uuid4())
+
+        save_data = {
+            'id': prediction_id,
+            'symbol': symbol,
+            'timeframe': timeframe,
+            'created_at': datetime.now().isoformat(),
+            'status': status,
+            'result': None
+        }
+
+        # Save to file
+        result_file = self.predictions_dir / f"{prediction_id}.json"
+        with open(result_file, 'w') as f:
+            json.dump(save_data, f, indent=2, default=str)
+
+        return prediction_id
+
+    def save_prediction_result(
+        self,
+        symbol: str,
+        timeframe: str,
+        prediction_data: Dict,
+        prediction_id: Optional[str] = None
+    ) -> str:
+        """
+        Save prediction results to disk
+
+        Args:
+            symbol: Trading symbol
+            timeframe: Timeframe
+            prediction_data: Prediction data dictionary
+            prediction_id: Optional prediction ID (generates new one if not provided)
+
+        Returns:
+            Prediction ID
+        """
+        if prediction_id is None:
+            prediction_id = str(uuid.uuid4())
+
+        save_data = {
+            'id': prediction_id,
+            'symbol': symbol,
+            'timeframe': timeframe,
+            'created_at': datetime.now().isoformat(),
+            'status': 'completed',
+            'result': prediction_data
+        }
+
+        # Save to file
+        result_file = self.predictions_dir / f"{prediction_id}.json"
+        with open(result_file, 'w') as f:
+            json.dump(save_data, f, indent=2, default=str)
+
+        return prediction_id
+
+    def get_prediction_result(self, prediction_id: str) -> Optional[Dict]:
+        """
+        Get a specific prediction result
+
+        Args:
+            prediction_id: Prediction result ID
+
+        Returns:
+            Prediction data or None
+        """
+        try:
+            result_file = self.predictions_dir / f"{prediction_id}.json"
+            if not result_file.exists():
+                return None
+
+            with open(result_file, 'r') as f:
+                return json.load(f)
+
+        except Exception as e:
+            print(f"Error loading prediction {prediction_id}: {e}")
+            return None
+
+    def list_predictions(self) -> List[Dict]:
+        """
+        List all saved prediction results
+
+        Returns:
+            List of prediction summaries
+        """
+        results = []
+
+        try:
+            for result_file in self.predictions_dir.glob('*.json'):
+                try:
+                    with open(result_file, 'r') as f:
+                        result = json.load(f)
+                        # Return summary without full predictions array
+                        summary = {
+                            'id': result['id'],
+                            'symbol': result['symbol'],
+                            'timeframe': result['timeframe'],
+                            'created_at': result['created_at'],
+                            'status': result.get('status', 'completed'),
+                            'current_price': result.get('result', {}).get('current_price')
+                        }
+                        results.append(summary)
+                except Exception as e:
+                    print(f"Error loading prediction {result_file}: {e}")
+                    continue
+
+        except Exception as e:
+            print(f"Error listing predictions: {e}")
+
+        # Sort by creation date (most recent first)
+        results.sort(key=lambda x: x['created_at'], reverse=True)
+        return results
 
 
 # Singleton instance

@@ -48,3 +48,6 @@ data/
 backend/runtime/models/
 backend/runtime/cache/
 backend/runtime/output/
+# Backend generated files
+backend/analysis/models/saved/
+backend/output/backtests/*.json

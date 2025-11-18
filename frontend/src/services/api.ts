@@ -173,7 +173,7 @@ class ApiService {
     return response.data;
   }
 
-  async getSymbols(assetType: string = 'crypto'): Promise<string[]> {
+  async getSymbols(assetType: string = 'all'): Promise<string[]> {
     const response = await this.client.get('/market/symbols', {
       params: { asset_type: assetType },
     });

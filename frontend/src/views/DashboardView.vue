@@ -1,121 +1,110 @@
 <template>
-  <div>
-    <!-- Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
-      <p class="mt-2 text-gray-600">Overview of your trading bot performance</p>
-    </div>
-
+  <div class="space-y-8">
     <!-- Stats Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      <div class="stat-card">
-        <div class="stat-label">Total Value</div>
-        <div class="stat-value">${{ formatNumber(totalValue) }}</div>
-        <div class="text-xs text-gray-500 mt-2">Portfolio</div>
-      </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <StatCard
+        label="Total Value"
+        :value="`$${formatNumber(totalValue)}`"
+        change="Portfolio"
+        variant="primary"
+      />
 
-      <div class="stat-card">
-        <div class="stat-label">Daily P&L</div>
-        <div class="stat-value" :class="dailyPnL >= 0 ? 'positive' : 'negative'">
-          {{ dailyPnL >= 0 ? '+' : '' }}${{ formatNumber(dailyPnL) }}
-        </div>
-        <div class="text-xs mt-2" :class="dailyPnL >= 0 ? 'positive' : 'negative'">
-          {{ dailyPnLPercent >= 0 ? '+' : '' }}{{ dailyPnLPercent.toFixed(2) }}%
-        </div>
-      </div>
+      <StatCard
+        label="Daily P&L"
+        :value="`${dailyPnL >= 0 ? '+' : ''}$${formatNumber(dailyPnL)}`"
+        :change="`${dailyPnLPercent >= 0 ? '+' : ''}${dailyPnLPercent.toFixed(2)}%`"
+        :variant="dailyPnL >= 0 ? 'success' : 'danger'"
+      />
 
-      <div class="stat-card">
-        <div class="stat-label">Active Positions</div>
-        <div class="stat-value">{{ positionsCount }}</div>
-        <div class="text-xs text-gray-500 mt-2">Open trades</div>
-      </div>
+      <StatCard
+        label="Active Positions"
+        :value="positionsCount.toString()"
+        change="Open trades"
+        variant="primary"
+      />
 
-      <div class="stat-card">
-        <div class="stat-label">Total P&L</div>
-        <div class="stat-value" :class="totalPnL >= 0 ? 'positive' : 'negative'">
-          {{ totalPnL >= 0 ? '+' : '' }}${{ formatNumber(totalPnL) }}
-        </div>
-        <div class="text-xs mt-2" :class="totalPnL >= 0 ? 'positive' : 'negative'">
-          {{ totalPnLPercent >= 0 ? '+' : '' }}{{ totalPnLPercent.toFixed(2) }}%
-        </div>
-      </div>
+      <StatCard
+        label="Total P&L"
+        :value="`${totalPnL >= 0 ? '+' : ''}$${formatNumber(totalPnL)}`"
+        :change="`${totalPnLPercent >= 0 ? '+' : ''}${totalPnLPercent.toFixed(2)}%`"
+        :variant="totalPnL >= 0 ? 'success' : 'danger'"
+      />
     </div>
 
     <!-- Charts Row -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-      <!-- Portfolio Chart Placeholder -->
-      <div class="card">
-        <h3 class="card-header">Portfolio Value</h3>
-        <div class="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
-          <p class="text-gray-400">Chart will be displayed here</p>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <Card title="Portfolio Value" :icon="ChartBarIcon">
+        <div class="h-64 flex items-center justify-center bg-bg-tertiary rounded-lg">
+          <p class="text-text-muted">Chart will be displayed here</p>
         </div>
-      </div>
+      </Card>
 
-      <!-- Performance Chart Placeholder -->
-      <div class="card">
-        <h3 class="card-header">Daily Performance</h3>
-        <div class="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
-          <p class="text-gray-400">Chart will be displayed here</p>
+      <Card title="Daily Performance" :icon="ChartLineIcon">
+        <div class="h-64 flex items-center justify-center bg-bg-tertiary rounded-lg">
+          <p class="text-text-muted">Chart will be displayed here</p>
         </div>
-      </div>
+      </Card>
     </div>
 
     <!-- Recent Activity -->
-    <div class="card">
-      <h3 class="card-header">Recent Activity</h3>
+    <Card title="Recent Activity" :icon="ClockIcon">
       <div class="space-y-4">
-        <div v-if="loading" class="text-center py-8 text-gray-500">
-          Loading...
+        <div v-if="loading" class="flex justify-center items-center py-12">
+          <div class="spinner"></div>
         </div>
-        <div v-else-if="!hasPositions" class="text-center py-8 text-gray-500">
+        <div v-else-if="!hasPositions" class="text-center py-8 text-text-muted">
           No active positions
         </div>
         <div v-else class="space-y-3">
           <div
             v-for="(position, index) in portfolio?.positions"
             :key="index"
-            class="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+            class="flex items-center justify-between p-4 bg-bg-tertiary rounded-lg border border-border-default hover:border-accent-primary transition-all"
           >
             <div>
-              <div class="font-medium text-gray-900">{{ position.symbol }}</div>
-              <div class="text-sm text-gray-600">
+              <div class="font-medium text-text-primary">{{ position.symbol }}</div>
+              <div class="text-sm text-text-secondary">
                 {{ position.side.toUpperCase() }} · {{ position.quantity }} units
               </div>
             </div>
             <div class="text-right">
-              <div class="font-medium" :class="position.pnl >= 0 ? 'positive' : 'negative'">
+              <div class="font-medium" :class="position.pnl >= 0 ? 'text-accent-success' : 'text-accent-danger'">
                 {{ position.pnl >= 0 ? '+' : '' }}${{ formatNumber(position.pnl) }}
               </div>
-              <div class="text-sm" :class="position.pnl_pct >= 0 ? 'positive' : 'negative'">
+              <div class="text-sm" :class="position.pnl_pct >= 0 ? 'text-accent-success' : 'text-accent-danger'">
                 {{ position.pnl_pct >= 0 ? '+' : '' }}{{ position.pnl_pct.toFixed(2) }}%
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </Card>
 
     <!-- Quick Actions -->
-    <div class="mt-8 flex gap-4">
-      <router-link to="/backtests" class="btn-primary">
+    <div class="flex flex-wrap gap-4">
+      <Button @click="$router.push('/backtests')" variant="primary">
         Run Backtest
-      </router-link>
-      <router-link to="/predictions" class="btn-secondary">
+      </Button>
+      <Button @click="$router.push('/predictions')" variant="secondary">
         View Predictions
-      </router-link>
-      <router-link to="/strategies" class="btn-secondary">
+      </Button>
+      <Button @click="$router.push('/strategies')" variant="secondary">
         Manage Strategies
-      </router-link>
+      </Button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
-import { usePortfolioStore } from '../stores/portfolio';
-import { storeToRefs } from 'pinia';
+import { onMounted } from 'vue'
+import { usePortfolioStore } from '../stores/portfolio'
+import { storeToRefs } from 'pinia'
+import { ChartBarIcon, ClockIcon, ChartLineIcon } from '@heroicons/vue/24/outline'
+import StatCard from '@/features/dashboard/components/StatCard.vue'
+import Card from '@/shared/components/ui/Card.vue'
+import Button from '@/shared/components/ui/Button.vue'
 
-const portfolioStore = usePortfolioStore();
+const portfolioStore = usePortfolioStore()
 const {
   portfolio,
   loading,
@@ -126,20 +115,35 @@ const {
   dailyPnLPercent,
   hasPositions,
   positionsCount,
-} = storeToRefs(portfolioStore);
+} = storeToRefs(portfolioStore)
 
 onMounted(async () => {
   try {
-    await portfolioStore.fetchPortfolio();
+    await portfolioStore.fetchPortfolio()
   } catch (error) {
-    console.error('Failed to fetch portfolio:', error);
+    console.error('Failed to fetch portfolio:', error)
   }
-});
+})
 
 function formatNumber(value: number): string {
   return Math.abs(value).toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  });
+  })
 }
 </script>
+
+<style scoped>
+.spinner {
+  width: 3rem;
+  height: 3rem;
+  border: 3px solid var(--border-default);
+  border-top-color: var(--accent-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+</style>

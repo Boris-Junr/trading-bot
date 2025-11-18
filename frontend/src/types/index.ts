@@ -1,15 +1,19 @@
 // Trading Bot Types
 
 export interface BacktestResult {
+  id?: string;
   strategy: string;
   symbol: string;
   start_date: string;
   end_date: string;
-  performance: Performance;
-  trading: TradingStats;
+  performance?: Performance;
+  trading?: TradingStats;
   equity_curve?: EquityPoint[];
   trades?: Trade[];
   daily_performance?: DailyPerformance[];
+  status?: 'success' | 'failed';
+  error?: string;
+  created_at?: string;
 }
 
 export interface Performance {
@@ -169,4 +173,53 @@ export interface BacktestScenario {
   end_date: string;
   initial_capital: number;
   params: Record<string, any>;
+}
+
+// Task Management Types
+export type TaskStatus = 'pending' | 'queued' | 'running' | 'completed' | 'failed';
+
+export interface Task {
+  task_id: string;
+  task_type: 'backtest' | 'model_training' | 'prediction';
+  status: TaskStatus;
+  description?: string;  // Dynamic log/status message (e.g., "Training model...", "Generating predictions...")
+  created_at: string;
+  started_at?: string;
+  completed_at?: string;
+  queue_position?: number;
+  estimated_cpu_cores?: number;
+  estimated_ram_gb?: number;
+  progress?: number; // 0-100
+  result?: Record<string, any>;
+  error?: string;
+}
+
+export interface SystemResources {
+  total_cpu_cores: number;
+  available_cpu_cores: number;
+  total_ram_gb: number;
+  available_ram_gb: number;
+  min_cpu_cores: number;
+  min_ram_gb: number;
+}
+
+export interface QueuedTaskInfo {
+  task_id: string;
+  task_type: string;
+  priority: number;
+  estimated_cpu_cores: number;
+  estimated_ram_gb: number;
+  queued_at: string;
+}
+
+export interface QueueStatus {
+  queued_count: number;
+  running_count: number;
+  queued_tasks: QueuedTaskInfo[];
+  running_tasks: QueuedTaskInfo[];
+}
+
+export interface ResourceSummary {
+  resources: SystemResources;
+  queue: QueueStatus;
 }

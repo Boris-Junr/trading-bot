@@ -13,7 +13,7 @@ import json
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from backtesting.engine import BacktestEngine
-from domain.strategies.implementations.ml_predictive_strategy import MLPredictiveStrategy
+from domain.strategies.registry import get_strategy_registry
 from data.historical import HistoricalDataFetcher
 from domain.ml.predictors.multi_ohlc_predictor import MultiOHLCPredictor
 import math
@@ -93,13 +93,20 @@ class BacktestService:
             print(f"[BACKTEST] Step 1/4: Fetching historical data...")
             start_dt = pd.to_datetime(start_date).to_pydatetime()
             end_dt = pd.to_datetime(end_date).to_pydatetime()
+
+            # If end date is same as start date, set to end of that day
+            if start_dt.date() == end_dt.date() and end_dt.hour == 0 and end_dt.minute == 0:
+                end_dt = end_dt.replace(hour=23, minute=59, second=59)
+                print(f"[BACKTEST] Adjusted end date to end of day: {end_dt}")
+
             print(f"[BACKTEST] Timeframe: {strategy_params.get('timeframe', '1m')}")
 
             df = self.fetcher.fetch(
                 symbol=symbol,
                 start=start_dt,
                 end=end_dt,
-                timeframe=strategy_params.get('timeframe', '1m')
+                timeframe=strategy_params.get('timeframe', '1m'),
+                force_refresh=True
             )
 
             if df is None:
@@ -144,33 +151,26 @@ class BacktestService:
 
             # Process results
             print(f"\n[BACKTEST] Step 4/4: Processing results...")
-            portfolio_hist = results.get('portfolio_history', [])
-            final_equity = portfolio_hist[-1]['equity'] if portfolio_hist else initial_cash
-            total_pnl = final_equity - initial_cash
-            total_return = total_pnl / initial_cash
-
-            metrics = results.get('metrics', {})
+            performance = results.get('performance', {})
+            trading = results.get('trading', {})
             trades = results.get('trades', [])
-            # Trades are Trade objects (dataclass), not dicts - access .pnl attribute
-            winning_trades = len([t for t in trades if t.pnl > 0])
-            losing_trades = len([t for t in trades if t.pnl < 0])
 
             print(f"[BACKTEST] OK - Results processed")
             print(f"\n{'='*80}")
             print(f"[BACKTEST] SUMMARY")
             print(f"{'='*80}")
-            print(f"[BACKTEST] Initial Capital: ${initial_cash:,.2f}")
-            print(f"[BACKTEST] Final Equity:    ${final_equity:,.2f}")
-            print(f"[BACKTEST] Total P&L:       ${total_pnl:+,.2f} ({total_return:+.2%})")
+            print(f"[BACKTEST] Initial Capital: ${performance.get('initial_cash', initial_cash):,.2f}")
+            print(f"[BACKTEST] Final Equity:    ${performance.get('final_equity', initial_cash):,.2f}")
+            print(f"[BACKTEST] Total P&L:       ${performance.get('total_pnl', 0.0):+,.2f} ({performance.get('total_return', 0.0) * 100:+.2f}%)")
             print(f"[BACKTEST] ")
-            print(f"[BACKTEST] Total Trades:    {len(trades)}")
-            print(f"[BACKTEST] Winning:         {winning_trades}")
-            print(f"[BACKTEST] Losing:          {losing_trades}")
-            print(f"[BACKTEST] Win Rate:        {(winning_trades / len(trades) * 100) if trades else 0:.1f}%")
+            print(f"[BACKTEST] Total Trades:    {trading.get('total_trades', 0)}")
+            print(f"[BACKTEST] Winning:         {trading.get('winning_trades', 0)}")
+            print(f"[BACKTEST] Losing:          {trading.get('losing_trades', 0)}")
+            print(f"[BACKTEST] Win Rate:        {trading.get('win_rate', 0.0) * 100:.1f}%")
             print(f"[BACKTEST] ")
-            print(f"[BACKTEST] Sharpe Ratio:    {metrics.get('sharpe_ratio', 0.0):.3f}")
-            print(f"[BACKTEST] Max Drawdown:    {metrics.get('max_drawdown', 0.0):.2%}")
-            print(f"[BACKTEST] Profit Factor:   {metrics.get('profit_factor', 0.0):.3f}")
+            print(f"[BACKTEST] Sharpe Ratio:    {performance.get('sharpe_ratio', 0.0):.3f}")
+            print(f"[BACKTEST] Max Drawdown:    {performance.get('max_drawdown', 0.0) * 100:.2f}%")
+            print(f"[BACKTEST] Profit Factor:   {trading.get('profit_factor', 0.0):.3f}")
             print(f"{'='*80}\n")
 
             # Save results
@@ -179,26 +179,28 @@ class BacktestService:
 
             return {
                 'id': result_id,
+                'status': 'success',
                 'strategy': strategy,
                 'symbol': symbol,
                 'start_date': start_date,
                 'end_date': end_date,
+                'created_at': datetime.now().isoformat(),
                 'performance': {
-                    'initial_cash': initial_cash,
-                    'final_equity': sanitize_metric(final_equity),
-                    'total_return': sanitize_metric(total_return),
-                    'total_pnl': sanitize_metric(total_pnl),
-                    'sharpe_ratio': sanitize_metric(metrics.get('sharpe_ratio', 0.0)),
-                    'max_drawdown': sanitize_metric(metrics.get('max_drawdown', 0.0))
+                    'initial_cash': sanitize_metric(performance.get('initial_cash', initial_cash)),
+                    'final_equity': sanitize_metric(performance.get('final_equity', initial_cash)),
+                    'total_return': sanitize_metric(performance.get('total_return', 0.0)),
+                    'total_pnl': sanitize_metric(performance.get('total_pnl', 0.0)),
+                    'sharpe_ratio': sanitize_metric(performance.get('sharpe_ratio', 0.0)),
+                    'max_drawdown': sanitize_metric(performance.get('max_drawdown', 0.0))
                 },
                 'trading': {
-                    'total_trades': len(trades),
-                    'winning_trades': winning_trades,
-                    'losing_trades': losing_trades,
-                    'win_rate': sanitize_metric(winning_trades / len(trades) if trades else 0.0),
-                    'profit_factor': sanitize_metric(metrics.get('profit_factor', 0.0)),
-                    'avg_win': sanitize_metric(metrics.get('avg_win', 0.0)),
-                    'avg_loss': sanitize_metric(abs(metrics.get('avg_loss', 0.0)))
+                    'total_trades': trading.get('total_trades', 0),
+                    'winning_trades': trading.get('winning_trades', 0),
+                    'losing_trades': trading.get('losing_trades', 0),
+                    'win_rate': sanitize_metric(trading.get('win_rate', 0.0)),
+                    'profit_factor': sanitize_metric(trading.get('profit_factor', 0.0)),
+                    'avg_win': sanitize_metric(trading.get('avg_win', 0.0)),
+                    'avg_loss': sanitize_metric(abs(trading.get('avg_loss', 0.0)))
                 }
             }
 
@@ -259,8 +261,12 @@ class BacktestService:
             return None
 
     def _create_strategy(self, strategy_name: str, symbol: str, params: Dict, backtest_start_date: str = None):
-        """Create a strategy instance"""
+        """Create a strategy instance using the registry."""
         try:
+            # Get the strategy registry
+            registry = get_strategy_registry()
+
+            # Special handling for MLPredictive strategy - needs model path
             if strategy_name == 'MLPredictive':
                 model_path = params.get('model_path')
                 if not model_path:
@@ -301,22 +307,19 @@ class BacktestService:
                                     print("Failed to train model")
                                     return None
 
-                return MLPredictiveStrategy(
-                    model_path=model_path,
-                    min_predicted_return=params.get('min_predicted_return', 0.002),
-                    confidence_threshold=params.get('confidence_threshold', 0.6),
-                    prediction_window=params.get('prediction_window', 60),
-                    risk_per_trade=params.get('risk_per_trade', 0.02),
-                    use_prefilter=params.get('use_prefilter', True),  # Enable by default for performance
-                    prefilter_threshold=params.get('prefilter_threshold', 0.3)  # Only call ML when setup score > 0.3
-                )
+                # Add model_path to params
+                params['model_path'] = model_path
 
-            # Add more strategies here as they are implemented
-            # elif strategy_name == 'RSI':
-            #     return RSIStrategy(...)
+            # Use registry to create strategy instance
+            print(f"[BacktestService] Creating strategy: {strategy_name}")
+            strategy = registry.create_strategy(strategy_name, **params)
 
-            print(f"Unknown strategy: {strategy_name}")
-            return None
+            if strategy is None:
+                print(f"[BacktestService] Failed to create strategy: {strategy_name}")
+                available = registry.get_all_strategies()
+                print(f"[BacktestService] Available strategies: {list(available.keys())}")
+
+            return strategy
 
         except Exception as e:
             print(f"Error creating strategy: {e}")
@@ -412,7 +415,8 @@ class BacktestService:
                 symbol=symbol,
                 start=start_dt,
                 end=end_dt,
-                timeframe=timeframe
+                timeframe=timeframe,
+                force_refresh=True
             )
 
             if df is None or len(df) < 1000:

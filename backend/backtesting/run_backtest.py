@@ -15,7 +15,7 @@ from pathlib import Path
 
 from backtesting.engine import BacktestEngine
 from data.fetchers.crypto_fetcher import CryptoFetcher
-from domain.strategies.implementations import MLPredictiveStrategy
+from domain.strategies.implementations import MLPredictiveStrategy, BreakoutScalpingStrategy
 
 
 def load_scenario(scenario_file: str) -> dict:
@@ -31,6 +31,8 @@ def create_strategy(strategy_config: dict):
 
     if strategy_type == 'MLPredictiveStrategy':
         return MLPredictiveStrategy(**params)
+    elif strategy_type == 'BreakoutScalpingStrategy':
+        return BreakoutScalpingStrategy(**params)
     else:
         raise ValueError(f"Unknown strategy type: {strategy_type}")
 

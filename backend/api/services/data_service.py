@@ -107,36 +107,41 @@ class DataService:
             print(f"Error getting current price: {e}")
             return None
 
-    def get_available_symbols(self, asset_type: str = 'crypto') -> list[str]:
+    def get_available_symbols(self, asset_type: str = 'all') -> list[str]:
         """
-        Get list of available trading symbols
+        Get list of available trading symbols from global trading pairs configuration
 
         Args:
-            asset_type: 'crypto' or 'stock'
+            asset_type: 'crypto', 'forex', 'indices', or 'all' (default: 'all')
 
         Returns:
-            List of available symbol strings
+            List of allowed symbol strings from trading pairs config
         """
         try:
-            if asset_type == 'crypto':
-                # Get popular crypto pairs from Binance
-                # Using a curated list of top trading pairs
-                return [
-                    'BTC/USDT', 'ETH/USDT', 'BNB/USDT', 'XRP/USDT',
-                    'SOL/USDT', 'ADA/USDT', 'DOGE/USDT', 'DOT/USDT',
-                    'MATIC/USDT', 'AVAX/USDT', 'LINK/USDT', 'UNI/USDT',
-                    'ATOM/USDT', 'LTC/USDT', 'BCH/USDT', 'NEAR/USDT',
-                    'APT/USDT', 'ARB/USDT', 'OP/USDT', 'INJ/USDT'
-                ]
-            elif asset_type == 'stock':
-                # Return popular US stocks
-                return [
-                    'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META',
-                    'TSLA', 'NVDA', 'JPM', 'V', 'JNJ',
-                    'WMT', 'PG', 'DIS', 'MA', 'NFLX'
-                ]
-            else:
-                return []
+            from domain.config import (
+                get_pairs_by_type,
+                ALLOWED_SYMBOLS,
+                AssetType
+            )
+
+            # If requesting all symbols, return everything
+            if asset_type == 'all':
+                return list(ALLOWED_SYMBOLS)
+
+            # Map request to AssetType enum
+            asset_type_map = {
+                'crypto': AssetType.CRYPTO,
+                'forex': AssetType.FOREX,
+                'indices': AssetType.INDICES
+            }
+
+            if asset_type not in asset_type_map:
+                # Fallback to all symbols if invalid asset_type
+                return list(ALLOWED_SYMBOLS)
+
+            # Get pairs for specific asset type
+            pairs = get_pairs_by_type(asset_type_map[asset_type])
+            return [pair.symbol for pair in pairs]
         except Exception as e:
             print(f"Error getting available symbols: {e}")
             return []

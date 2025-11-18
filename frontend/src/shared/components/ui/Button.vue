@@ -1,5 +1,9 @@
 <template>
   <button
+    v-motion
+    :initial="{ scale: 1 }"
+    :hovered="{ scale: disabled || loading ? 1 : 1.02 }"
+    :tapped="{ scale: disabled || loading ? 1 : 0.98 }"
     :class="buttonClasses"
     :disabled="disabled || loading"
     @click="handleClick"

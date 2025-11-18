@@ -73,7 +73,7 @@ class PortfolioService:
                 current_price = pos['entry_price']  # Fallback to entry price
 
             pnl = (current_price - pos['entry_price']) * pos['quantity']
-            pnl_pct = (pnl / (pos['entry_price'] * pos['quantity'])) * 100
+            pnl_pct = pnl / (pos['entry_price'] * pos['quantity'])
 
             position_value = current_price * pos['quantity']
             total_position_value += position_value
@@ -95,11 +95,11 @@ class PortfolioService:
         # Calculate P&L
         initial_value = 100000.0  # Would track this properly in production
         total_pnl = total_value - initial_value
-        total_pnl_pct = (total_pnl / initial_value) * 100
+        total_pnl_pct = total_pnl / initial_value
 
         # Daily P&L (would calculate from history in production)
         daily_pnl = sum(p['pnl'] for p in positions)
-        daily_pnl_pct = (daily_pnl / total_value) * 100 if total_value > 0 else 0.0
+        daily_pnl_pct = (daily_pnl / total_value) if total_value > 0 else 0.0
 
         return {
             'total_value': total_value,

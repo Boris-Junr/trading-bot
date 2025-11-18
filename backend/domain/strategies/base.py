@@ -91,11 +91,11 @@ class Position:
 
     @property
     def unrealized_pnl_pct(self) -> float:
-        """Calculate unrealized P&L as percentage."""
+        """Calculate unrealized P&L as decimal fraction."""
         if self.side == 'long':
-            return ((self.current_price - self.entry_price) / self.entry_price) * 100
+            return (self.current_price - self.entry_price) / self.entry_price
         else:  # short
-            return ((self.entry_price - self.current_price) / self.entry_price) * 100
+            return (self.entry_price - self.current_price) / self.entry_price
 
     def update_price(self, price: float):
         """Update current price."""
@@ -129,6 +129,7 @@ class Strategy(ABC):
     All strategies must implement:
     - generate_signal(): Generate trading signal based on market data
     - get_name(): Return strategy name
+    - get_metadata(): Return strategy metadata (class method)
 
     Optional overrides:
     - on_position_opened(): Called when position is opened
@@ -162,6 +163,23 @@ class Strategy(ABC):
     @abstractmethod
     def get_name(self) -> str:
         """Return strategy name."""
+        pass
+
+    @classmethod
+    @abstractmethod
+    def get_metadata(cls) -> Dict[str, Any]:
+        """
+        Return strategy metadata for auto-discovery.
+
+        Returns:
+            Dictionary with:
+                - name: Strategy identifier (e.g., 'MLPredictive')
+                - label: Human-readable name (e.g., 'ML Predictive Strategy')
+                - description: Strategy description
+                - requires_model: Whether strategy requires a trained model
+                - category: Strategy category (e.g., 'machine_learning', 'technical', 'breakout')
+                - parameters: Dict of parameter names and their default values
+        """
         pass
 
     def on_position_opened(self, position: Position):

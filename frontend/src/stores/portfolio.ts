@@ -13,9 +13,9 @@ export const usePortfolioStore = defineStore('portfolio', () => {
   // Getters
   const totalValue = computed(() => portfolio.value?.total_value || 0);
   const totalPnL = computed(() => portfolio.value?.total_pnl || 0);
-  const totalPnLPercent = computed(() => portfolio.value?.total_pnl_pct || 0);
+  const totalPnLPercent = computed(() => (portfolio.value?.total_pnl_pct || 0) * 100);
   const dailyPnL = computed(() => portfolio.value?.daily_pnl || 0);
-  const dailyPnLPercent = computed(() => portfolio.value?.daily_pnl_pct || 0);
+  const dailyPnLPercent = computed(() => (portfolio.value?.daily_pnl_pct || 0) * 100);
 
   const hasPositions = computed(() =>
     portfolio.value?.positions && portfolio.value.positions.length > 0

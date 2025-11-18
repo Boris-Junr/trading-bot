@@ -11,7 +11,9 @@ Usage:
 
 # Strategy implementations
 from .ml_predictive_strategy import MLPredictiveStrategy
+from .breakout_scalping_strategy import BreakoutScalpingStrategy
 
 __all__ = [
     'MLPredictiveStrategy',
+    'BreakoutScalpingStrategy',
 ]
