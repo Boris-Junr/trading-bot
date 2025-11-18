@@ -44,26 +44,22 @@ export const useTaskManagerStore = defineStore('taskManager', () => {
 
   const cpuUsagePercent = computed(() => {
     if (!resources.value) return 0
-    const res = resources.value.resources
-    const used = res.total_cpu_cores - res.available_cpu_cores
-    return res.total_cpu_cores > 0 ? (used / res.total_cpu_cores) * 100 : 0
+    return resources.value.resources.cpu.usage_percent || 0
   })
 
   const ramUsagePercent = computed(() => {
     if (!resources.value) return 0
-    const res = resources.value.resources
-    const used = res.total_ram_gb - res.available_ram_gb
-    return res.total_ram_gb > 0 ? (used / res.total_ram_gb) * 100 : 0
+    return resources.value.resources.ram.usage_percent || 0
   })
 
   const availableCpuCores = computed(() => {
     if (!resources.value) return 0
-    return resources.value.resources.available_cpu_cores
+    return resources.value.resources.cpu.available_cores
   })
 
   const availableRamGB = computed(() => {
     if (!resources.value) return 0
-    return resources.value.resources.available_ram_gb
+    return resources.value.resources.ram.available_gb
   })
 
   // Actions

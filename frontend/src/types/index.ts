@@ -195,12 +195,19 @@ export interface Task {
 }
 
 export interface SystemResources {
-  total_cpu_cores: number;
-  available_cpu_cores: number;
-  total_ram_gb: number;
-  available_ram_gb: number;
-  min_cpu_cores: number;
-  min_ram_gb: number;
+  cpu: {
+    total_cores: number;
+    available_cores: number;
+    usage_percent: number;
+    min_threshold_cores: number;
+  };
+  ram: {
+    total_gb: number;
+    available_gb: number;
+    usage_percent: number;
+    min_threshold_gb: number;
+  };
+  buffer_percent: number;
 }
 
 export interface QueuedTaskInfo {

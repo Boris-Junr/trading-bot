@@ -3,13 +3,13 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
       <!-- System Resources Card -->
       <SystemResources
-        :totalCores="taskManager.resources?.resources.total_cpu_cores || 0"
-        :availableCores="taskManager.resources?.resources.available_cpu_cores || 0"
-        :totalRAM="taskManager.resources?.resources.total_ram_gb || 0"
-        :availableRAM="taskManager.resources?.resources.available_ram_gb || 0"
-        :minCores="taskManager.resources?.resources.min_cpu_cores || 0"
-        :minRAM="taskManager.resources?.resources.min_ram_gb || 0"
-        :bufferPercent="5"
+        :totalCores="taskManager.resources?.resources.cpu.total_cores || 0"
+        :availableCores="taskManager.resources?.resources.cpu.available_cores || 0"
+        :totalRAM="taskManager.resources?.resources.ram.total_gb || 0"
+        :availableRAM="taskManager.resources?.resources.ram.available_gb || 0"
+        :minCores="taskManager.resources?.resources.cpu.min_threshold_cores || 0"
+        :minRAM="taskManager.resources?.resources.ram.min_threshold_gb || 0"
+        :bufferPercent="taskManager.resources?.resources.buffer_percent || 5"
       />
 
       <!-- Resource Summary Stats -->
@@ -150,9 +150,7 @@ const recentCompletedTasks = computed(() => {
 // CPU Capacity
 const cpuUsagePercent = computed(() => {
   if (!taskManager.resources) return 0
-  const res = taskManager.resources.resources
-  const used = res.total_cpu_cores - res.available_cpu_cores
-  return res.total_cpu_cores > 0 ? (used / res.total_cpu_cores) * 100 : 0
+  return taskManager.resources.resources.cpu.usage_percent || 0
 })
 
 const cpuCapacityVariant = computed(() => {
@@ -173,9 +171,7 @@ const cpuCapacityText = computed(() => {
 // RAM Capacity
 const ramUsagePercent = computed(() => {
   if (!taskManager.resources) return 0
-  const res = taskManager.resources.resources
-  const used = res.total_ram_gb - res.available_ram_gb
-  return res.total_ram_gb > 0 ? (used / res.total_ram_gb) * 100 : 0
+  return taskManager.resources.resources.ram.usage_percent || 0
 })
 
 const ramCapacityVariant = computed(() => {
