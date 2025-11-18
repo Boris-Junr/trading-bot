@@ -67,12 +67,12 @@ import type { PredictionData } from '@/types'
 import { useChart } from '@/composables/useChart'
 import { useFormatters } from '@/composables/useFormatters'
 import { ChartBarIcon, TableCellsIcon } from '@heroicons/vue/24/outline'
-import Card from '@/shared/components/ui/Card.vue'
+import Card from '@/components/ui/Card.vue'
 import StatCard from '@/features/dashboard/components/StatCard.vue'
-import Table from '@/shared/components/ui/Table.vue'
-import TableHeader from '@/shared/components/ui/TableHeader.vue'
-import TableRow from '@/shared/components/ui/TableRow.vue'
-import TableCell from '@/shared/components/ui/TableCell.vue'
+import Table from '@/components/ui/Table.vue'
+import TableHeader from '@/components/ui/TableHeader.vue'
+import TableRow from '@/components/ui/TableRow.vue'
+import TableCell from '@/components/ui/TableCell.vue'
 
 /**
  * Prediction Results Card Component

@@ -135,9 +135,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, reactive } from 'vue'
 import { usePortfolioStore } from '@/stores/portfolio'
-import Card from '@/shared/components/ui/Card.vue'
-import Button from '@/shared/components/ui/Button.vue'
-import Badge from '@/shared/components/ui/Badge.vue'
+import Card from '@/components/ui/Card.vue'
+import Button from '@/components/ui/Button.vue'
+import Badge from '@/components/ui/Badge.vue'
 import StatCard from './components/StatCard.vue'
 import {
   ChartBarIcon,

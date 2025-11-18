@@ -135,8 +135,8 @@ import type { BacktestResult } from '../types'
 import api from '../services/api'
 import { useChart } from '../composables/useChart'
 import { ChartBarIcon, ArrowLeftIcon } from '@heroicons/vue/24/outline'
-import Button from '@/shared/components/ui/Button.vue'
-import Card from '@/shared/components/ui/Card.vue'
+import Button from '@/components/ui/Button.vue'
+import Card from '@/components/ui/Card.vue'
 import StatCard from '@/features/dashboard/components/StatCard.vue'
 
 const route = useRoute()

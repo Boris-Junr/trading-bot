@@ -101,8 +101,8 @@ import { usePortfolioStore } from '../stores/portfolio'
 import { storeToRefs } from 'pinia'
 import { ChartBarIcon, ClockIcon, ChartLineIcon } from '@heroicons/vue/24/outline'
 import StatCard from '@/features/dashboard/components/StatCard.vue'
-import Card from '@/shared/components/ui/Card.vue'
-import Button from '@/shared/components/ui/Button.vue'
+import Card from '@/components/ui/Card.vue'
+import Button from '@/components/ui/Button.vue'
 
 const portfolioStore = usePortfolioStore()
 const {

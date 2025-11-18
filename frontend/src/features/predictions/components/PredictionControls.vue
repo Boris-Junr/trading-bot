@@ -31,9 +31,9 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { CogIcon } from '@heroicons/vue/24/outline'
-import Card from '@/shared/components/ui/Card.vue'
-import Button from '@/shared/components/ui/Button.vue'
-import Select from '@/shared/components/ui/Select.vue'
+import Card from '@/components/ui/Card.vue'
+import Button from '@/components/ui/Button.vue'
+import Select from '@/components/ui/Select.vue'
 
 /**
  * Prediction Controls Component

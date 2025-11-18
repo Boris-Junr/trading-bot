@@ -129,11 +129,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useTaskManagerStore } from '@/stores/taskManager'
-import Card from '@/shared/components/ui/Card.vue'
-import Badge from '@/shared/components/ui/Badge.vue'
-import Button from '@/shared/components/ui/Button.vue'
-import SystemResources from '@/shared/components/ui/SystemResources.vue'
-import StatusCenter from '@/shared/components/ui/StatusCenter.vue'
+import Card from '@/components/ui/Card.vue'
+import Badge from '@/components/ui/Badge.vue'
+import Button from '@/components/ui/Button.vue'
+import SystemResources from '@/components/ui/SystemResources.vue'
+import StatusCenter from '@/components/ui/StatusCenter.vue'
 
 const taskManager = useTaskManagerStore()
 
