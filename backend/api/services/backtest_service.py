@@ -16,31 +16,7 @@ from backtesting.engine import BacktestEngine
 from domain.strategies.registry import get_strategy_registry
 from data.historical import HistoricalDataFetcher
 from domain.ml.predictors.multi_ohlc_predictor import MultiOHLCPredictor
-import math
-
-
-def sanitize_metric(value: float) -> float:
-    """Sanitize numeric values for JSON serialization (replace inf/nan with 0.0)"""
-    if value is None or math.isnan(value) or math.isinf(value):
-        return 0.0
-    return value
-
-
-def sanitize_dict(data: dict) -> dict:
-    """Recursively sanitize all numeric values in a dictionary for JSON serialization"""
-    sanitized = {}
-    for key, value in data.items():
-        if isinstance(value, dict):
-            sanitized[key] = sanitize_dict(value)
-        elif isinstance(value, (list, tuple)):
-            sanitized[key] = [sanitize_dict(item) if isinstance(item, dict) else
-                             (sanitize_metric(item) if isinstance(item, (int, float)) else item)
-                             for item in value]
-        elif isinstance(value, (int, float)):
-            sanitized[key] = sanitize_metric(value)
-        else:
-            sanitized[key] = value
-    return sanitized
+from utils import sanitize_metric, sanitize_dict
 
 
 class BacktestService:
