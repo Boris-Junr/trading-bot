@@ -49,7 +49,7 @@ export function useTaskNotifications() {
         if (currentStatus === 'running' && previousStatus === 'queued') {
           notifications.info(
             'Task Started',
-            `${taskTypeName} is now running in the background`,
+            `${taskTypeName} is now running`,
             3000
           )
         }
@@ -58,7 +58,7 @@ export function useTaskNotifications() {
         if (currentStatus === 'completed' && previousStatus === 'running') {
           notifications.success(
             'Task Completed',
-            `${taskTypeName} is done`,
+            `${taskTypeName} finished successfully`,
             5000
           )
         }
