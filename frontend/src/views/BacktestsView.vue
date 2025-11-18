@@ -21,30 +21,30 @@
     </div>
 
     <!-- Loading State -->
-    <div v-if="loading" class="flex justify-center items-center py-12">
-      <div class="spinner"></div>
-    </div>
+    <LoadingSpinner v-if="loading" />
 
     <!-- Error State -->
-    <div v-else-if="error" class="p-4 bg-accent-danger/10 border border-accent-danger/20 rounded-xl text-accent-danger text-sm">
-      {{ error }}
-    </div>
+    <ErrorAlert v-else-if="error" :message="error" />
 
     <!-- Backtests List -->
     <div v-else>
-      <Card v-if="sortedBacktests.length === 0">
-        <div class="text-center py-12">
-          <ChartPieIcon class="w-16 h-16 mx-auto text-text-muted mb-4" />
-          <p class="text-text-primary font-medium mb-2">No Backtests Run Yet</p>
-          <p class="text-text-secondary text-sm mb-6">Run your first backtest to test your trading strategies</p>
+      <EmptyState
+        v-if="sortedBacktests.length === 0"
+        :icon="ChartPieIcon"
+        title="No Backtests Run Yet"
+        description="Run your first backtest to test your trading strategies"
+        action-text="Run Your First Backtest"
+        @action="showRunModal = true"
+      >
+        <template #action>
           <Button @click="showRunModal = true" variant="primary">
             Run Your First Backtest
           </Button>
           <p v-if="!hasModels" class="text-sm text-text-muted mt-4">
             A model will be automatically trained when you run your first backtest
           </p>
-        </div>
-      </Card>
+        </template>
+      </EmptyState>
 
       <div v-else>
         <!-- Header with New Backtest button -->
@@ -208,6 +208,8 @@ import { useBacktestStore } from '../stores/backtest'
 import { storeToRefs } from 'pinia'
 import type { BacktestResult, ModelInfo } from '../types'
 import api from '../services/api'
+import { useFormatters } from '@/composables/useFormatters'
+import { useSymbols } from '@/composables/useSymbols'
 import { InformationCircleIcon, ClockIcon, ChartPieIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
 import Card from '@/shared/components/ui/Card.vue'
 import Button from '@/shared/components/ui/Button.vue'
@@ -215,17 +217,22 @@ import Badge from '@/shared/components/ui/Badge.vue'
 import Modal from '@/shared/components/ui/Modal.vue'
 import Input from '@/shared/components/ui/Input.vue'
 import Select from '@/shared/components/ui/Select.vue'
+import LoadingSpinner from '@/shared/components/ui/LoadingSpinner.vue'
+import ErrorAlert from '@/shared/components/ui/ErrorAlert.vue'
+import EmptyState from '@/shared/components/ui/EmptyState.vue'
 
 const router = useRouter()
 const backtestStore = useBacktestStore()
 const { backtests, loading, error, sortedBacktests } = storeToRefs(backtestStore)
 
+// Initialize composables
+const { formatDate, formatNumber } = useFormatters()
+const { symbols: availableSymbols, loading: loadingSymbols, fetch: fetchSymbols } = useSymbols('all')
+
 const showRunModal = ref(false)
 const running = ref(false)
 const availableModels = ref<ModelInfo[]>([])
 const loadingModels = ref(false)
-const availableSymbols = ref<string[]>([])
-const loadingSymbols = ref(false)
 const availableStrategies = ref<Array<{value: string, label: string, description: string, requires_model: boolean}>>([
   { value: 'MLPredictive', label: 'ML Predictive Strategy', description: 'Uses ML predictions', requires_model: true },
   { value: 'BreakoutScalping', label: 'Breakout Scalping Strategy', description: 'Range breakout strategy', requires_model: false }
@@ -275,20 +282,6 @@ onMounted(async () => {
 
   await backtestStore.fetchBacktests()
 })
-
-async function fetchSymbols() {
-  loadingSymbols.value = true
-  try {
-    // Fetch all allowed symbols from global trading pairs configuration
-    availableSymbols.value = await api.getSymbols('all')
-  } catch (e) {
-    console.error('Failed to fetch symbols:', e)
-    // Fallback to high-volatility pairs from config
-    availableSymbols.value = ['BTC/USDT', 'ETH/USDT', 'DOGE/USDT', 'SOL/USDT', 'EUR/USD', 'NAS100']
-  } finally {
-    loadingSymbols.value = false
-  }
-}
 
 async function fetchModels() {
   loadingModels.value = true
@@ -385,22 +378,6 @@ function goToDetail(backtest: BacktestResult) {
   const id = backtest.id || btoa(`${backtest.strategy}-${backtest.end_date}`)
   router.push(`/backtests/${id}`)
 }
-
-function formatNumber(value: number): string {
-  return Math.abs(value).toLocaleString('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
-}
-
-function formatDate(dateString: string): string {
-  const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
-}
 </script>
 
 <style scoped>
@@ -461,27 +438,5 @@ function formatDate(dateString: string): string {
 
 .alert-meta svg {
   flex-shrink: 0;
-}
-
-.spinner {
-  width: 3rem;
-  height: 3rem;
-  border: 3px solid var(--border-default);
-  border-top-color: var(--accent-primary);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-.spinner-sm {
-  width: 1.25rem;
-  height: 1.25rem;
-  border: 2px solid var(--border-default);
-  border-top-color: var(--accent-primary);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
 </style>

@@ -1,14 +1,10 @@
 <template>
   <div>
     <!-- Loading State -->
-    <div v-if="loading" class="flex justify-center items-center py-12">
-      <div class="spinner"></div>
-    </div>
+    <LoadingSpinner v-if="loading" />
 
     <!-- Error State -->
-    <div v-else-if="error" class="p-4 bg-accent-danger/10 border border-accent-danger/20 rounded-xl text-accent-danger text-sm">
-      {{ error }}
-    </div>
+    <ErrorAlert v-else-if="error" :message="error" />
 
     <!-- Portfolio Content -->
     <div v-else class="space-y-8">
@@ -24,7 +20,7 @@
         <StatCard
           label="Total P&L"
           :value="formatCurrency(totalPnL)"
-          :change="`${totalPnLPercent >= 0 ? '+' : ''}${totalPnLPercent.toFixed(2)}%`"
+          :change="formatPercent(totalPnLPercent)"
           :variant="totalPnL >= 0 ? 'success' : 'danger'"
           :trend="totalPnL >= 0 ? 'up' : 'down'"
         />
@@ -32,7 +28,7 @@
         <StatCard
           label="Daily P&L"
           :value="formatCurrency(dailyPnL)"
-          :change="`${dailyPnLPercent >= 0 ? '+' : ''}${dailyPnLPercent.toFixed(2)}%`"
+          :change="formatPercent(dailyPnLPercent)"
           :variant="dailyPnL >= 0 ? 'success' : 'danger'"
           :trend="dailyPnL >= 0 ? 'up' : 'down'"
         />
@@ -46,10 +42,12 @@
           </Button>
         </template>
 
-        <div v-if="!hasPositions" class="text-center py-12">
-          <BriefcaseIcon class="w-16 h-16 mx-auto text-text-muted mb-4" />
-          <p class="text-text-secondary">No active positions</p>
-        </div>
+        <EmptyState
+          v-if="!hasPositions"
+          :icon="BriefcaseIcon"
+          title="No Active Positions"
+          description="You don't have any open positions at the moment. Start trading to see your portfolio here."
+        />
 
         <Table v-else>
           <template #header>
@@ -70,16 +68,16 @@
                 {{ position.side.toUpperCase() }}
               </Badge>
             </TableCell>
-            <TableCell align="right" mono>{{ position.quantity }}</TableCell>
-            <TableCell align="right" mono>${{ position.entry_price.toFixed(2) }}</TableCell>
-            <TableCell align="right" mono>${{ position.current_price.toFixed(2) }}</TableCell>
+            <TableCell align="right" mono>{{ formatNumber(position.quantity, 8) }}</TableCell>
+            <TableCell align="right" mono>{{ formatCurrency(position.entry_price) }}</TableCell>
+            <TableCell align="right" mono>{{ formatCurrency(position.current_price) }}</TableCell>
             <TableCell align="right" mono :class="position.pnl >= 0 ? 'text-accent-success' : 'text-accent-danger'">
-              {{ position.pnl >= 0 ? '+' : '' }}${{ formatNumber(position.pnl) }}
+              {{ formatCurrency(position.pnl) }}
             </TableCell>
             <TableCell align="right" mono :class="position.pnl_pct >= 0 ? 'text-accent-success' : 'text-accent-danger'">
-              {{ position.pnl_pct >= 0 ? '+' : '' }}{{ (position.pnl_pct * 100).toFixed(2) }}%
+              {{ formatPercent(position.pnl_pct * 100) }}
             </TableCell>
-            <TableCell>{{ formatDate(position.opened_at) }}</TableCell>
+            <TableCell>{{ formatDate(position.opened_at, 'long') }}</TableCell>
           </TableRow>
         </Table>
       </Card>
@@ -99,16 +97,22 @@ import { ref, onMounted, nextTick } from 'vue'
 import { usePortfolioStore } from '../stores/portfolio'
 import { storeToRefs } from 'pinia'
 import { useChart } from '../composables/useChart'
+import { useFormatters } from '@/composables/useFormatters'
 import api from '../services/api'
 import { BriefcaseIcon, ChartBarIcon } from '@heroicons/vue/24/outline'
 import Card from '@/shared/components/ui/Card.vue'
 import Button from '@/shared/components/ui/Button.vue'
 import Badge from '@/shared/components/ui/Badge.vue'
+import LoadingSpinner from '@/shared/components/ui/LoadingSpinner.vue'
+import ErrorAlert from '@/shared/components/ui/ErrorAlert.vue'
+import EmptyState from '@/shared/components/ui/EmptyState.vue'
 import StatCard from '@/features/dashboard/components/StatCard.vue'
 import Table from '@/shared/components/ui/Table.vue'
 import TableHeader from '@/shared/components/ui/TableHeader.vue'
 import TableRow from '@/shared/components/ui/TableRow.vue'
 import TableCell from '@/shared/components/ui/TableCell.vue'
+
+const { formatDate, formatCurrency, formatNumber, formatPercent } = useFormatters()
 
 const portfolioStore = usePortfolioStore()
 const {
@@ -185,7 +189,7 @@ function createHistoryChart(history: any[]) {
           intersect: false,
           callbacks: {
             label: (context) => {
-              return `Value: $${context.parsed.y.toLocaleString()}`
+              return `Value: ${formatCurrency(context.parsed.y)}`
             },
           },
         },
@@ -200,7 +204,7 @@ function createHistoryChart(history: any[]) {
         y: {
           display: true,
           ticks: {
-            callback: (value) => `$${value.toLocaleString()}`,
+            callback: (value) => formatCurrency(value as number),
           },
         },
       },
@@ -212,45 +216,4 @@ function createHistoryChart(history: any[]) {
     },
   })
 }
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value)
-}
-
-function formatNumber(value: number): string {
-  return Math.abs(value).toLocaleString('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
-}
-
-function formatDate(dateString: string): string {
-  const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
 </script>
-
-<style scoped>
-.spinner {
-  width: 3rem;
-  height: 3rem;
-  border: 3px solid var(--border-default);
-  border-top-color: var(--accent-primary);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-</style>
