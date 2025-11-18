@@ -7,6 +7,7 @@
 
 import { ref, type Ref } from 'vue'
 import type { PredictionData } from '@/types'
+import { useTaskManagerStore } from '@/stores/taskManager'
 
 export interface LoadingStep {
   name: string
@@ -223,9 +224,13 @@ export function usePredictionPolling(
     timeframe: string,
     autoTrain: boolean = true
   ): Promise<PredictionData | null> {
+    const taskManager = useTaskManagerStore()
+
     loading.value = true
     error.value = null
     resetLoadingSteps()
+
+    let predictionId: string | undefined
 
     try {
       // Step 1: Start the background prediction
@@ -246,7 +251,21 @@ export function usePredictionPolling(
       }
 
       const startData = await startResponse.json()
-      const predictionId = startData.prediction_id
+      predictionId = startData.prediction_id
+
+      if (!predictionId) {
+        throw new Error('No prediction ID returned from server')
+      }
+
+      // Add task to taskManager for notifications
+      taskManager.addTask({
+        task_id: predictionId,
+        task_type: 'prediction',
+        status: startData.status === 'queued' ? 'queued' : 'running',
+        description: `Generating predictions for ${symbol} ${timeframe}`,
+        created_at: new Date().toISOString(),
+        queue_position: startData.queue_position
+      })
 
       if (startData.status === 'queued') {
         loadingStatus.value = {
@@ -266,6 +285,12 @@ export function usePredictionPolling(
       // Step 2: Poll for completion
       const result = await pollResult(predictionId)
 
+      // Update task as completed
+      taskManager.updateTask(predictionId, {
+        status: 'completed',
+        completed_at: new Date().toISOString()
+      })
+
       loading.value = false
 
       if (result && onComplete) {
@@ -277,6 +302,14 @@ export function usePredictionPolling(
       const errorMessage = err.message || 'Failed to generate prediction'
       error.value = errorMessage
       loading.value = false
+
+      // Update task as failed if we have the predictionId
+      if (predictionId) {
+        taskManager.updateTask(predictionId, {
+          status: 'failed',
+          error: errorMessage
+        })
+      }
 
       if (onError) {
         onError(errorMessage)
