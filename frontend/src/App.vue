@@ -25,9 +25,9 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue'
-import Sidebar from './shared/components/layout/Sidebar.vue'
-import Header from './shared/components/layout/Header.vue'
-import NotificationContainer from './shared/components/ui/NotificationContainer.vue'
+import Sidebar from './components/layout/Sidebar.vue'
+import Header from './components/layout/Header.vue'
+import NotificationContainer from './components/ui/NotificationContainer.vue'
 import { useTaskManagerStore } from './stores/taskManager'
 import { useTaskNotifications } from './composables/useTaskNotifications'
 
