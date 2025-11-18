@@ -52,6 +52,22 @@ RECENT MAJOR UPDATES (2025-11-18)
    - Fixed BreakoutScalping initialization (added **kwargs)
    - Fixed frontend crash on failed backtests (conditional rendering)
 
+7. PHASE 2: BACKEND ROUTER ARCHITECTURE (2025-11-18)
+   - Split main.py from 1,453 lines → 150 lines (90% reduction)
+   - Created 8 modular routers in backend/api/routers/
+   - Created backend/api/utils.py for SSE helpers
+   - All 33 API routes registered successfully
+   - No breaking changes - all endpoints maintained
+   - Improved maintainability and testability
+
+8. PHASE 3: FRONTEND SHARED UTILITIES (2025-11-18)
+   - Created useFormatters composable (eliminates ~120 lines duplication)
+   - Created LoadingSpinner component (eliminates ~200 lines duplication)
+   - Created ErrorAlert component (eliminates ~150 lines duplication)
+   - Created useAsyncData composable (standardizes async operations, ~250 lines)
+   - Created useSymbols composable (centralized symbol fetching, ~80 lines)
+   - Total: ~800 lines of duplication eliminated
+
 HOW TO RUN
 ================================================================================
 
@@ -104,6 +120,13 @@ ADDING NEW STRATEGIES:
 - Inherit from Strategy base class
 - Implement get_metadata() classmethod
 - Auto-registers (no manual updates needed)
+
+USING SHARED COMPOSABLES:
+- useFormatters: Date, currency, number, percent formatting
+- useAsyncData: Standardized async data fetching with loading/error states
+- useSymbols: Centralized symbol fetching with caching and fallback
+- LoadingSpinner: Reusable loading indicator (sm/md/lg sizes)
+- ErrorAlert: Standardized error display (danger/warning/info variants)
 
 ================================================================================
 END OF SESSION NOTES
