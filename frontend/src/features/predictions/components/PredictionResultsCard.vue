@@ -54,7 +54,7 @@
           <TableCell align="right" mono :class="prediction.predicted_return >= 0 ? 'text-accent-success' : 'text-accent-danger'">
             {{ formatPercent(prediction.predicted_return * 100, 3) }}
           </TableCell>
-          <TableCell align="right" mono>{{ formatPercent(prediction.confidence * 100, 1, false) }}</TableCell>
+          <TableCell align="right" mono>{{ formatPercent((prediction.confidence ?? 0) * 100, 1, false) }}</TableCell>
         </TableRow>
       </Table>
     </Card>
@@ -164,7 +164,7 @@ function updateChart(data: PredictionData) {
           mode: 'index',
           intersect: false,
           callbacks: {
-            label: (context) => {
+            label: (context: any) => {
               const point = context.raw as any
               return [
                 `Open: $${point.o.toFixed(2)}`,
@@ -189,7 +189,7 @@ function updateChart(data: PredictionData) {
           min: yMin,
           max: yMax,
           title: { display: true, text: 'Predicted Price (USD)' },
-          ticks: { callback: (value) => `$${value}` },
+          ticks: { callback: (value: any) => `$${value}` },
         },
       },
       interaction: { mode: 'index', intersect: false },
@@ -212,6 +212,9 @@ const finalPrediction = computed(() => {
     return { price: 0, change: 0, changePercent: 0 }
   }
   const lastPrediction = props.data.predictions[props.data.predictions.length - 1]
+  if (!lastPrediction) {
+    return { price: 0, change: 0, changePercent: 0 }
+  }
   const change = lastPrediction.predicted_close - props.data.current_price
   const changePercent = (change / props.data.current_price) * 100
   return { price: lastPrediction.predicted_close, change, changePercent }

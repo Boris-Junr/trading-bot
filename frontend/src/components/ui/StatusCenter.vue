@@ -4,7 +4,7 @@
       <div class="flex items-center justify-between">
         <h3 class="text-lg font-semibold text-text-primary">Task Status</h3>
         <div class="flex items-center gap-2">
-          <Badge variant="primary" size="sm">
+          <Badge variant="success" size="sm">
             {{ runningTasks.length }} Running
           </Badge>
           <Badge v-if="queuedTasks.length > 0" variant="warning" size="sm">
@@ -31,7 +31,7 @@
             <div class="flex-1">
               <div class="flex items-center gap-2 mb-1">
                 <span class="task-type">{{ formatTaskType(task.task_type) }}</span>
-                <Badge variant="success" size="xs">Running</Badge>
+                <Badge variant="success" size="sm">Running</Badge>
               </div>
               <div v-if="task.description" class="task-description">
                 {{ task.description }}
@@ -78,7 +78,7 @@
             <div class="flex-1">
               <div class="flex items-center gap-2 mb-1">
                 <span class="task-type">{{ formatTaskType(task.task_type) }}</span>
-                <Badge variant="warning" size="xs">
+                <Badge variant="warning" size="sm">
                   #{{ task.queue_position }} in queue
                 </Badge>
               </div>
@@ -121,7 +121,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import Card from './Card.vue'
 import Badge from './Badge.vue'
 import type { Task } from '@/types'
@@ -131,7 +130,7 @@ interface Props {
   queuedTasks: Task[]
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
 
 function formatTaskType(type: string): string {
   const typeMap: Record<string, string> = {

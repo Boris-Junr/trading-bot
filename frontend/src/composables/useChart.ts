@@ -1,4 +1,4 @@
-import { ref, onMounted, onUnmounted, watch, type Ref } from 'vue';
+import { onUnmounted, type Ref } from 'vue';
 import {
   Chart,
   LineController,

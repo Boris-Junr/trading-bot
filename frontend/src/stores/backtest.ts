@@ -24,8 +24,9 @@ export const useBacktestStore = defineStore('backtest', () => {
       } else if (a.id) {
         // Parse timestamp from ID format: Strategy_Symbol_YYYYMMDD_HHMMSS
         const match = a.id.match(/_(\d{8})_(\d{6})$/);
-        if (match) {
-          const [, dateStr, timeStr] = match;
+        if (match && match[1] && match[2]) {
+          const dateStr = match[1];
+          const timeStr = match[2];
           const year = dateStr.substring(0, 4);
           const month = dateStr.substring(4, 6);
           const day = dateStr.substring(6, 8);
@@ -44,8 +45,9 @@ export const useBacktestStore = defineStore('backtest', () => {
         dateB = new Date(b.created_at).getTime();
       } else if (b.id) {
         const match = b.id.match(/_(\d{8})_(\d{6})$/);
-        if (match) {
-          const [, dateStr, timeStr] = match;
+        if (match && match[1] && match[2]) {
+          const dateStr = match[1];
+          const timeStr = match[2];
           const year = dateStr.substring(0, 4);
           const month = dateStr.substring(4, 6);
           const day = dateStr.substring(6, 8);

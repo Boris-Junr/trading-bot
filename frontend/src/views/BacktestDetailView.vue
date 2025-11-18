@@ -24,29 +24,29 @@
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           label="Total Return"
-          :value="`${backtest.performance.total_return >= 0 ? '+' : ''}${(backtest.performance.total_return * 100).toFixed(2)}%`"
-          :change="`$${backtest.performance.total_pnl.toFixed(2)} profit`"
-          :variant="backtest.performance.total_return >= 0 ? 'success' : 'danger'"
+          :value="`${backtest.performance?.total_return && backtest.performance.total_return >= 0 ? '+' : ''}${((backtest.performance?.total_return ?? 0) * 100).toFixed(2)}%`"
+          :change="`$${(backtest.performance?.total_pnl ?? 0).toFixed(2)} profit`"
+          :variant="(backtest.performance?.total_return ?? 0) >= 0 ? 'success' : 'danger'"
         />
 
         <StatCard
           label="Sharpe Ratio"
-          :value="backtest.performance.sharpe_ratio.toFixed(2)"
+          :value="(backtest.performance?.sharpe_ratio ?? 0).toFixed(2)"
           change="Risk-adjusted return"
           variant="primary"
         />
 
         <StatCard
           label="Max Drawdown"
-          :value="`${(backtest.performance.max_drawdown * 100).toFixed(1)}%`"
+          :value="`${((backtest.performance?.max_drawdown ?? 0) * 100).toFixed(1)}%`"
           change="Largest decline"
           variant="danger"
         />
 
         <StatCard
           label="Win Rate"
-          :value="`${(backtest.trading.win_rate * 100).toFixed(1)}%`"
-          :change="`${backtest.trading.winning_trades} of ${backtest.trading.total_trades} trades`"
+          :value="`${((backtest.trading?.win_rate ?? 0) * 100).toFixed(1)}%`"
+          :change="`${backtest.trading?.winning_trades ?? 0} of ${backtest.trading?.total_trades ?? 0} trades`"
           variant="success"
         />
       </div>
@@ -68,7 +68,7 @@
           </div>
           <div>
             <div class="text-sm text-text-secondary mb-1">Initial Capital</div>
-            <div class="font-medium text-text-primary">${{ backtest.performance.initial_cash.toLocaleString() }}</div>
+            <div class="font-medium text-text-primary">${{ (backtest.performance?.initial_cash ?? 0).toLocaleString() }}</div>
           </div>
         </div>
       </Card>
@@ -93,27 +93,27 @@
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
           <div>
             <div class="text-sm text-text-secondary mb-1">Total Trades</div>
-            <div class="text-xl font-semibold text-text-primary">{{ backtest.trading.total_trades }}</div>
+            <div class="text-xl font-semibold text-text-primary">{{ backtest.trading?.total_trades ?? 0 }}</div>
           </div>
           <div>
             <div class="text-sm text-text-secondary mb-1">Winning Trades</div>
-            <div class="text-xl font-semibold text-accent-success">{{ backtest.trading.winning_trades }}</div>
+            <div class="text-xl font-semibold text-accent-success">{{ backtest.trading?.winning_trades ?? 0 }}</div>
           </div>
           <div>
             <div class="text-sm text-text-secondary mb-1">Losing Trades</div>
-            <div class="text-xl font-semibold text-accent-danger">{{ backtest.trading.losing_trades }}</div>
+            <div class="text-xl font-semibold text-accent-danger">{{ backtest.trading?.losing_trades ?? 0 }}</div>
           </div>
           <div>
             <div class="text-sm text-text-secondary mb-1">Avg Win</div>
-            <div class="text-xl font-semibold text-accent-success">${{ backtest.trading.avg_win.toFixed(2) }}</div>
+            <div class="text-xl font-semibold text-accent-success">${{ (backtest.trading?.avg_win ?? 0).toFixed(2) }}</div>
           </div>
           <div>
             <div class="text-sm text-text-secondary mb-1">Avg Loss</div>
-            <div class="text-xl font-semibold text-accent-danger">${{ backtest.trading.avg_loss.toFixed(2) }}</div>
+            <div class="text-xl font-semibold text-accent-danger">${{ (backtest.trading?.avg_loss ?? 0).toFixed(2) }}</div>
           </div>
           <div>
             <div class="text-sm text-text-secondary mb-1">Profit Factor</div>
-            <div class="text-xl font-semibold text-text-primary">{{ backtest.trading.profit_factor.toFixed(2) }}</div>
+            <div class="text-xl font-semibold text-text-primary">{{ (backtest.trading?.profit_factor ?? 0).toFixed(2) }}</div>
           </div>
         </div>
       </Card>
@@ -179,7 +179,7 @@ function createCharts(bt: BacktestResult) {
   // Create mock equity curve data (in real app, this would come from backtest results)
   const days = 30
   const equityData = []
-  let equity = bt.performance.initial_cash
+  let equity = bt.performance?.initial_cash ?? 10000
 
   for (let i = 0; i <= days; i++) {
     // Simulate equity growth
@@ -216,7 +216,7 @@ function createCharts(bt: BacktestResult) {
         },
         tooltip: {
           callbacks: {
-            label: (context) => `Value: $${context.parsed.y.toFixed(2)}`,
+            label: (context: any) => `Value: $${(context.parsed.y ?? 0).toFixed(2)}`,
           },
         },
       },

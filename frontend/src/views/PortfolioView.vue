@@ -188,8 +188,8 @@ function createHistoryChart(history: any[]) {
           mode: 'index',
           intersect: false,
           callbacks: {
-            label: (context) => {
-              return `Value: ${formatCurrency(context.parsed.y)}`
+            label: (context: any) => {
+              return `Value: ${formatCurrency(context.parsed.y ?? 0)}`
             },
           },
         },

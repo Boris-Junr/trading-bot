@@ -71,7 +71,7 @@
             <div class="flex-1">
               <div class="flex items-center gap-3 mb-2">
                 <h3 class="text-lg font-semibold text-text-primary">{{ backtest.strategy }}</h3>
-                <Badge variant="primary" size="sm">{{ backtest.symbol }}</Badge>
+                <Badge variant="info" size="sm">{{ backtest.symbol }}</Badge>
                 <Badge v-if="backtest.status === 'failed'" variant="danger" size="sm">FAILED</Badge>
               </div>
               <p class="text-sm text-text-secondary mb-4">
@@ -91,30 +91,30 @@
                   <div class="text-xs text-text-muted mb-1">Total Return</div>
                   <div
                     class="text-lg font-semibold font-mono"
-                    :class="backtest.performance.total_return >= 0 ? 'text-accent-success' : 'text-accent-danger'"
+                    :class="(backtest.performance?.total_return ?? 0) >= 0 ? 'text-accent-success' : 'text-accent-danger'"
                   >
-                    {{ backtest.performance.total_return >= 0 ? '+' : '' }}{{ (backtest.performance.total_return * 100).toFixed(2) }}%
+                    {{ (backtest.performance?.total_return ?? 0) >= 0 ? '+' : '' }}{{ ((backtest.performance?.total_return ?? 0) * 100).toFixed(2) }}%
                   </div>
                 </div>
                 <div>
                   <div class="text-xs text-text-muted mb-1">Total P&L</div>
                   <div
                     class="text-lg font-semibold font-mono"
-                    :class="backtest.performance.total_pnl >= 0 ? 'text-accent-success' : 'text-accent-danger'"
+                    :class="(backtest.performance?.total_pnl ?? 0) >= 0 ? 'text-accent-success' : 'text-accent-danger'"
                   >
-                    {{ backtest.performance.total_pnl >= 0 ? '+' : '' }}${{ formatNumber(backtest.performance.total_pnl) }}
+                    {{ (backtest.performance?.total_pnl ?? 0) >= 0 ? '+' : '' }}${{ formatNumber(backtest.performance?.total_pnl ?? 0) }}
                   </div>
                 </div>
                 <div>
                   <div class="text-xs text-text-muted mb-1">Sharpe Ratio</div>
                   <div class="text-lg font-semibold font-mono text-text-primary">
-                    {{ backtest.performance.sharpe_ratio.toFixed(2) }}
+                    {{ (backtest.performance?.sharpe_ratio ?? 0).toFixed(2) }}
                   </div>
                 </div>
                 <div>
                   <div class="text-xs text-text-muted mb-1">Win Rate</div>
                   <div class="text-lg font-semibold font-mono text-text-primary">
-                    {{ (backtest.trading.win_rate * 100).toFixed(1) }}%
+                    {{ ((backtest.trading?.win_rate ?? 0) * 100).toFixed(1) }}%
                   </div>
                 </div>
               </div>
@@ -223,7 +223,7 @@ import EmptyState from '@/components/ui/EmptyState.vue'
 
 const router = useRouter()
 const backtestStore = useBacktestStore()
-const { backtests, loading, error, sortedBacktests } = storeToRefs(backtestStore)
+const { loading, error, sortedBacktests } = storeToRefs(backtestStore)
 
 // Initialize composables
 const { formatDate, formatNumber } = useFormatters()
@@ -260,8 +260,8 @@ onMounted(async () => {
   const end = new Date()
   const start = new Date()
   start.setDate(start.getDate() - 30)
-  newBacktest.value.end_date = end.toISOString().split('T')[0]
-  newBacktest.value.start_date = start.toISOString().split('T')[0]
+  newBacktest.value.end_date = end.toISOString().split('T')[0] ?? ''
+  newBacktest.value.start_date = start.toISOString().split('T')[0] ?? ''
 
   // Fetch available symbols, models, and strategies in parallel
   await Promise.all([
@@ -272,11 +272,11 @@ onMounted(async () => {
 
   // Set default symbol to first available symbol
   if (availableSymbols.value.length > 0) {
-    newBacktest.value.symbol = availableSymbols.value[0]
+    newBacktest.value.symbol = availableSymbols.value[0] ?? ''
   }
 
   // Set default strategy to first available strategy
-  if (availableStrategies.value.length > 0) {
+  if (availableStrategies.value.length > 0 && availableStrategies.value[0]) {
     newBacktest.value.strategy = availableStrategies.value[0].value
   }
 

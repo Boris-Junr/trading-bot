@@ -210,6 +210,7 @@ export interface QueuedTaskInfo {
   estimated_cpu_cores: number;
   estimated_ram_gb: number;
   queued_at: string;
+  queue_position?: number;
 }
 
 export interface QueueStatus {

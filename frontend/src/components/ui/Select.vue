@@ -54,7 +54,7 @@
         >
           <div class="dropdown-content">
             <div
-              v-for="(option, index) in options"
+              v-for="option in options"
               :key="option.value"
               @click="selectOption(option)"
               class="dropdown-item"

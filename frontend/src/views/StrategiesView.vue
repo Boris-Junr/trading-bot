@@ -33,7 +33,7 @@
             <h3 class="text-lg font-semibold text-text-primary">{{ strategy.name }}</h3>
             <p class="text-sm text-text-secondary mt-1">{{ strategy.type }} strategy</p>
           </div>
-          <Badge :variant="strategy.status === 'active' ? 'success' : 'secondary'" size="sm">
+          <Badge :variant="strategy.status === 'active' ? 'success' : 'neutral'" size="sm">
             {{ strategy.status.toUpperCase() }}
           </Badge>
         </div>

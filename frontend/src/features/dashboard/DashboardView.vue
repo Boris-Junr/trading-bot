@@ -82,7 +82,7 @@
           :key="index"
           class="position-card group relative"
           @mousemove="(e) => handleCardMouseMove(e, index)"
-          @mouseleave="() => handleCardMouseLeave(index)"
+          @mouseleave="handleCardMouseLeave"
         >
           <!-- Animated background glow -->
           <div
@@ -142,10 +142,7 @@ import StatCard from './components/StatCard.vue'
 import {
   ChartBarIcon,
   BriefcaseIcon,
-  SparklesIcon,
-  ArrowPathIcon,
   ArrowRightIcon,
-  CogIcon,
   ChartPieIcon,
 } from '@heroicons/vue/24/outline'
 
@@ -169,7 +166,7 @@ const handleCardMouseMove = (event: MouseEvent, index: number) => {
   }
 }
 
-const handleCardMouseLeave = (index: number) => {
+const handleCardMouseLeave = () => {
   // Don't reset position - let opacity handle the fade out
 }
 

@@ -39,7 +39,7 @@
         </div>
       </Card>
 
-      <Card title="Daily Performance" :icon="ChartLineIcon">
+      <Card title="Daily Performance" :icon="ChartBarIcon">
         <div class="h-64 flex items-center justify-center bg-bg-tertiary rounded-lg">
           <p class="text-text-muted">Chart will be displayed here</p>
         </div>
@@ -99,7 +99,7 @@
 import { onMounted } from 'vue'
 import { usePortfolioStore } from '../stores/portfolio'
 import { storeToRefs } from 'pinia'
-import { ChartBarIcon, ClockIcon, ChartLineIcon } from '@heroicons/vue/24/outline'
+import { ChartBarIcon, ClockIcon } from '@heroicons/vue/24/outline'
 import StatCard from '@/features/dashboard/components/StatCard.vue'
 import Card from '@/components/ui/Card.vue'
 import Button from '@/components/ui/Button.vue'
