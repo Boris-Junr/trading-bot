@@ -20,14 +20,10 @@ export function useTaskNotifications() {
       ...taskManager.failedTasks
     ],
     (allTasks) => {
-      console.log('[useTaskNotifications] Watch triggered, tasks:', allTasks.length)
-
       allTasks.forEach((task) => {
         const taskId = task.task_id
         const previousStatus = previousStates.get(taskId)
         const currentStatus = task.status
-
-        console.log(`[useTaskNotifications] Task ${taskId}: ${previousStatus} -> ${currentStatus}`)
 
         // Skip if status hasn't changed
         if (previousStatus === currentStatus) {
