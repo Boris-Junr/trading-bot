@@ -10,11 +10,18 @@ export function useTaskNotifications() {
   // Track previous task states
   const previousStates = new Map<string, Task['status']>()
 
-  // Watch for task state changes
+  // Watch all tasks by combining all computed arrays
+  // This ensures we catch tasks transitioning between states
   watch(
-    () => taskManager.tasks,
-    (newTasks) => {
-      newTasks.forEach((task, taskId) => {
+    () => [
+      ...taskManager.queuedTasks,
+      ...taskManager.runningTasks,
+      ...taskManager.completedTasks,
+      ...taskManager.failedTasks
+    ],
+    (allTasks) => {
+      allTasks.forEach((task) => {
+        const taskId = task.task_id
         const previousStatus = previousStates.get(taskId)
         const currentStatus = task.status
 
@@ -42,7 +49,7 @@ export function useTaskNotifications() {
         if (currentStatus === 'running' && previousStatus === 'queued') {
           notifications.info(
             'Task Started',
-            `${taskTypeName} is now running`,
+            `${taskTypeName} is now running in the background`,
             3000
           )
         }
@@ -51,7 +58,7 @@ export function useTaskNotifications() {
         if (currentStatus === 'completed' && previousStatus === 'running') {
           notifications.success(
             'Task Completed',
-            `${taskTypeName} finished successfully`,
+            `${taskTypeName} is done`,
             5000
           )
         }
@@ -67,7 +74,7 @@ export function useTaskNotifications() {
       })
 
       // Clean up tracking for removed tasks
-      const currentTaskIds = new Set(newTasks.keys())
+      const currentTaskIds = new Set(allTasks.map(t => t.task_id))
       previousStates.forEach((_, taskId) => {
         if (!currentTaskIds.has(taskId)) {
           previousStates.delete(taskId)
