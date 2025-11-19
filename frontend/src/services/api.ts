@@ -13,8 +13,12 @@ class ApiService {
   private client: AxiosInstance;
 
   constructor() {
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+    console.log('[API] Initializing with base URL:', apiBaseUrl);
+    console.log('[API] Environment:', import.meta.env.MODE);
+
     this.client = axios.create({
-      baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api',
+      baseURL: apiBaseUrl,
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json',

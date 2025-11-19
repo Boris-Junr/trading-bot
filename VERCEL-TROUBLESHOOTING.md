@@ -29,9 +29,13 @@ vercel --force
 ### 3. Verify Environment Variables
 
 Settings → Environment Variables - ensure these are set:
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
-- `VITE_API_BASE_URL` (if needed)
+- `VITE_SUPABASE_URL` - Your Supabase project URL
+- `VITE_SUPABASE_ANON_KEY` - Your Supabase anon/public key
+- `VITE_API_BASE_URL` - **REQUIRED**: Your Render backend URL (e.g., `https://your-app.onrender.com/api`)
+
+**IMPORTANT**: After adding/changing environment variables, you MUST:
+1. Clear build cache (Settings → General → Clear Build Cache)
+2. Redeploy (Deployments → ⋯ → Redeploy, uncheck "Use existing Build Cache")
 
 ### 4. Verify Node.js Version
 
