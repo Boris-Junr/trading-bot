@@ -25,8 +25,8 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
-env_path = Path(__file__).parent.parent.parent / '.env'
+# Load environment variables from backend/.env file
+env_path = Path(__file__).parent.parent / '.env'
 if env_path.exists():
     load_dotenv(env_path)
     print(f"[Startup] Loaded .env from: {env_path}")
@@ -55,6 +55,7 @@ from api.routers import (
     strategies_router,
     market_router,
 )
+from api.routers.api_keys import router as api_keys_router
 
 # Initialize FastAPI application
 app = FastAPI(
@@ -123,6 +124,7 @@ app.include_router(predictions_router) # ML predictions
 app.include_router(ml_models_router)   # Model training and management
 app.include_router(strategies_router)  # Trading strategies
 app.include_router(market_router)      # Market data and symbols
+app.include_router(api_keys_router)    # User API key management
 
 print("[Startup] All routers registered successfully")
 print("[Startup] API endpoints:")

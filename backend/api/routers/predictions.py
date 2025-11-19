@@ -11,9 +11,10 @@ import asyncio
 import traceback
 from datetime import datetime
 from typing import Optional
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import StreamingResponse
 from api import models
+from api.auth import get_current_user_id
 from api.services.ml_service import get_ml_service
 from infrastructure.resource_manager import (
     get_resource_monitor,
@@ -181,7 +182,12 @@ async def get_predictions(
 
 
 @router.post("/generate")
-async def generate_predictions_background(symbol: str, timeframe: str, auto_train: bool = True):
+async def generate_predictions_background(
+    symbol: str,
+    timeframe: str,
+    auto_train: bool = True,
+    user_id: str = Depends(get_current_user_id)
+):
     """
     Generate predictions in the background (non-blocking).
 
@@ -192,6 +198,7 @@ async def generate_predictions_background(symbol: str, timeframe: str, auto_trai
         symbol: Trading symbol (e.g., ETH_USDT)
         timeframe: Timeframe (e.g., 1m, 5m, 15m, 1h)
         auto_train: Automatically train model if needed
+        user_id: Authenticated user ID (from JWT token)
 
     Returns:
         Dict with status ("queued" or "running"), prediction_id, and message.
@@ -246,7 +253,8 @@ async def generate_predictions_background(symbol: str, timeframe: str, auto_trai
             symbol=symbol,
             timeframe=timeframe,
             prediction_id=prediction_id,
-            status='queued' if not can_run else 'running'
+            status='queued' if not can_run else 'running',
+            user_id=user_id
         )
 
         # Define async wrapper for prediction task
@@ -320,7 +328,8 @@ async def generate_predictions_background(symbol: str, timeframe: str, auto_trai
                         symbol=symbol,
                         timeframe=timeframe,
                         prediction_data=predictions_data,
-                        prediction_id=prediction_id
+                        prediction_id=prediction_id,
+                        user_id=user_id
                     )
                     await log(f"✅ Prediction complete! Results are ready to view")
                 else:
@@ -388,21 +397,24 @@ async def generate_predictions_background(symbol: str, timeframe: str, auto_trai
 
 
 @router.get("/list")
-async def list_predictions():
+async def list_predictions(user_id: str = Depends(get_current_user_id)):
     """
-    Get list of all predictions.
+    Get list of all predictions for the authenticated user.
 
     Returns a list of all generated predictions with metadata including
     symbol, timeframe, timestamp, and status.
 
+    Args:
+        user_id: Authenticated user ID (from JWT token)
+
     Returns:
         List of prediction metadata dictionaries
     """
-    return await asyncio.to_thread(ml_service.list_predictions)
+    return await asyncio.to_thread(ml_service.list_predictions, user_id=user_id)
 
 
 @router.get("/{prediction_id}")
-async def get_prediction_by_id(prediction_id: str):
+async def get_prediction_by_id(prediction_id: str, user_id: str = Depends(get_current_user_id)):
     """
     Get prediction result by ID.
 
@@ -411,14 +423,15 @@ async def get_prediction_by_id(prediction_id: str):
 
     Args:
         prediction_id: Unique prediction identifier
+        user_id: Authenticated user ID (from JWT token)
 
     Returns:
         Complete prediction result data
 
     Raises:
-        HTTPException: 404 if prediction not found
+        HTTPException: 404 if prediction not found or doesn't belong to user
     """
-    result = await asyncio.to_thread(ml_service.get_prediction_result, prediction_id)
+    result = await asyncio.to_thread(ml_service.get_prediction_result, prediction_id, user_id=user_id)
 
     if result is None:
         raise HTTPException(status_code=404, detail="Prediction not found")

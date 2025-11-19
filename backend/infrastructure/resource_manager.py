@@ -230,6 +230,7 @@ class QueuedTask:
     estimated_cpu_cores: float = 0.0
     estimated_ram_gb: float = 0.0
     description: str = ""  # Current status/log message
+    user_id: Optional[str] = None  # User who owns this task
 
     def __post_init__(self):
         """Set estimated resources based on task type."""
@@ -268,6 +269,7 @@ class TaskQueue:
         *args,
         priority: int = 0,
         task_id: Optional[str] = None,
+        user_id: Optional[str] = None,
         **kwargs
     ) -> str:
         """
@@ -279,6 +281,7 @@ class TaskQueue:
             *args: Positional arguments for task_func
             priority: Priority level (higher = runs sooner)
             task_id: Optional custom task ID (generated if not provided)
+            user_id: Optional user ID who owns this task
             **kwargs: Keyword arguments for task_func
 
         Returns:
@@ -293,7 +296,8 @@ class TaskQueue:
                 task_func=task_func,
                 args=args,
                 kwargs=kwargs,
-                priority=priority
+                priority=priority,
+                user_id=user_id
             )
 
             # Insert based on priority (higher priority first)
@@ -314,7 +318,8 @@ class TaskQueue:
                 "estimated_cpu_cores": queued_task.estimated_cpu_cores,
                 "estimated_ram_gb": queued_task.estimated_ram_gb,
                 "queue_position": len(self.queue),
-                "description": queued_task.description
+                "description": queued_task.description,
+                "user_id": user_id
             })
 
             return task_id
@@ -376,7 +381,8 @@ class TaskQueue:
                     await self._emit_event("task_completed", {
                         "task_id": task.task_id,
                         "task_type": task.task_type.value,
-                        "success": success
+                        "success": success,
+                        "user_id": task.user_id
                     })
 
     async def register_running_task(
@@ -385,6 +391,7 @@ class TaskQueue:
         task_func: Callable,
         *args,
         task_id: Optional[str] = None,
+        user_id: Optional[str] = None,
         **kwargs
     ) -> str:
         """
@@ -395,6 +402,7 @@ class TaskQueue:
             task_func: Async function being executed
             *args: Positional arguments
             task_id: Optional task ID (generates new one if not provided)
+            user_id: Optional user ID who owns this task
             **kwargs: Keyword arguments
 
         Returns:
@@ -410,7 +418,8 @@ class TaskQueue:
                 task_func=task_func,
                 args=args,
                 kwargs=kwargs,
-                priority=0
+                priority=0,
+                user_id=user_id
             )
 
             self.running_tasks[task_id] = queued_task
@@ -423,7 +432,8 @@ class TaskQueue:
                 "task_id": task_id,
                 "task_type": task_type.value,
                 "estimated_cpu_cores": queued_task.estimated_cpu_cores,
-                "estimated_ram_gb": queued_task.estimated_ram_gb
+                "estimated_ram_gb": queued_task.estimated_ram_gb,
+                "user_id": user_id
             })
 
             # Execute task and ensure cleanup
@@ -431,25 +441,32 @@ class TaskQueue:
 
             return task_id
 
-    def get_queue_status(self) -> Dict[str, Any]:
-        """Get current queue status."""
-        print(f"[TaskQueue] get_queue_status() called - running_tasks dict has {len(self.running_tasks)} items")
+    def get_queue_status(self, user_id: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Get current queue status, optionally filtered by user_id.
 
-        running_tasks_list = [
-            {
-                "task_id": task.task_id,
-                "task_type": task.task_type.value,
-                "estimated_cpu_cores": task.estimated_cpu_cores,
-                "estimated_ram_gb": task.estimated_ram_gb,
-                "description": task.description
-            }
-            for task in self.running_tasks.values()
-        ]
+        Args:
+            user_id: If provided, only return tasks belonging to this user
 
-        status = {
-            "queued_count": len(self.queue),
-            "running_count": len(self.running_tasks),
-            "queued_tasks": [
+        Returns:
+            Queue status with counts and task details
+        """
+        # Filter tasks by user_id if provided
+        if user_id:
+            running_tasks_list = [
+                {
+                    "task_id": task.task_id,
+                    "task_type": task.task_type.value,
+                    "estimated_cpu_cores": task.estimated_cpu_cores,
+                    "estimated_ram_gb": task.estimated_ram_gb,
+                    "description": task.description,
+                    "user_id": task.user_id
+                }
+                for task in self.running_tasks.values()
+                if task.user_id == user_id
+            ]
+
+            queued_tasks_list = [
                 {
                     "task_id": task.task_id,
                     "task_type": task.task_type.value,
@@ -458,18 +475,52 @@ class TaskQueue:
                     "estimated_cpu_cores": task.estimated_cpu_cores,
                     "estimated_ram_gb": task.estimated_ram_gb,
                     "queue_position": i + 1,
-                    "description": task.description
+                    "description": task.description,
+                    "user_id": task.user_id
                 }
                 for i, task in enumerate(self.queue)
-            ],
+                if task.user_id == user_id
+            ]
+        else:
+            running_tasks_list = [
+                {
+                    "task_id": task.task_id,
+                    "task_type": task.task_type.value,
+                    "estimated_cpu_cores": task.estimated_cpu_cores,
+                    "estimated_ram_gb": task.estimated_ram_gb,
+                    "description": task.description,
+                    "user_id": task.user_id
+                }
+                for task in self.running_tasks.values()
+            ]
+
+            queued_tasks_list = [
+                {
+                    "task_id": task.task_id,
+                    "task_type": task.task_type.value,
+                    "priority": task.priority,
+                    "queued_at": task.queued_at.isoformat(),
+                    "estimated_cpu_cores": task.estimated_cpu_cores,
+                    "estimated_ram_gb": task.estimated_ram_gb,
+                    "queue_position": i + 1,
+                    "description": task.description,
+                    "user_id": task.user_id
+                }
+                for i, task in enumerate(self.queue)
+            ]
+
+        status = {
+            "queued_count": len(queued_tasks_list),
+            "running_count": len(running_tasks_list),
+            "queued_tasks": queued_tasks_list,
             "running_tasks": running_tasks_list
         }
 
-        if len(running_tasks_list) > 0:
-            print(f"[TaskQueue] Returning {len(running_tasks_list)} running tasks")
-            print(f"[TaskQueue] Running task IDs: {[t['task_id'] for t in running_tasks_list]}")
-        else:
-            print(f"[TaskQueue] No running tasks to return")
+        # Only log when there's activity or when filtered by user
+        if user_id and (len(running_tasks_list) > 0 or len(queued_tasks_list) > 0):
+            print(f"[TaskQueue] Status for user {user_id[:8]}: {len(running_tasks_list)} running, {len(queued_tasks_list)} queued")
+        elif not user_id and (len(running_tasks_list) > 0 or len(queued_tasks_list) > 0):
+            print(f"[TaskQueue] System-wide status: {len(running_tasks_list)} running, {len(queued_tasks_list)} queued")
 
         return status
 
@@ -525,7 +576,8 @@ class TaskQueue:
                 await self._emit_event("task_description_update", {
                     "task_id": task_id,
                     "task_type": task.task_type.value,
-                    "description": description
+                    "description": description,
+                    "user_id": task.user_id
                 })
                 print(f"[TaskQueue] Updated task {task_id} description: {description}")
 

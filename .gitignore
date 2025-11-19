@@ -1,5 +1,8 @@
 # Environment variables
 .env
+.mcp.json
+frontend/.env
+backend/.env
 
 # Python
 __pycache__/

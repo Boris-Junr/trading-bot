@@ -3,8 +3,8 @@ from pathlib import Path
 from typing import Literal, Tuple
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
-env_path = Path(__file__).parent.parent.parent / '.env'
+# Load environment variables from backend/.env file
+env_path = Path(__file__).parent.parent / '.env'
 load_dotenv(dotenv_path=env_path)
 
 

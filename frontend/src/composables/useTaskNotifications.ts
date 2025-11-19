@@ -36,8 +36,8 @@ export function useTaskNotifications() {
         // Create notifications based on state transitions
         const taskTypeName = formatTaskType(task.task_type)
 
-        // Task queued
-        if (currentStatus === 'queued' && previousStatus !== 'queued') {
+        // Task queued (only show if it's new or transitioning to queued)
+        if (currentStatus === 'queued' && !previousStatus) {
           notifications.warning(
             'Task Queued',
             `${taskTypeName} queued at position #${task.queue_position || '?'}`,
@@ -45,8 +45,8 @@ export function useTaskNotifications() {
           )
         }
 
-        // Task started running
-        if (currentStatus === 'running' && previousStatus === 'queued') {
+        // Task started running (show for any transition to running)
+        if (currentStatus === 'running' && previousStatus !== 'running' && previousStatus !== 'completed' && previousStatus !== 'failed') {
           notifications.info(
             'Task Started',
             `${taskTypeName} is now running`,
@@ -54,8 +54,8 @@ export function useTaskNotifications() {
           )
         }
 
-        // Task completed
-        if (currentStatus === 'completed' && previousStatus === 'running') {
+        // Task completed (show for any transition to completed from active states)
+        if (currentStatus === 'completed' && (previousStatus === 'running' || previousStatus === 'queued' || !previousStatus)) {
           notifications.success(
             'Task Completed',
             `${taskTypeName} finished successfully`,
@@ -63,8 +63,8 @@ export function useTaskNotifications() {
           )
         }
 
-        // Task failed
-        if (currentStatus === 'failed') {
+        // Task failed (show for any transition to failed)
+        if (currentStatus === 'failed' && previousStatus !== 'failed') {
           notifications.error(
             'Task Failed',
             task.error || `${taskTypeName} failed to complete`,

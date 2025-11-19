@@ -101,6 +101,20 @@ export interface PredictionStep {
   confidence?: number;
 }
 
+export interface PredictionListItem {
+  id: string;
+  symbol: string;
+  timeframe: string;
+  status: 'completed' | 'running' | 'queued' | 'failed';
+  created_at: string;
+  current_price?: number;
+  direction?: 'bullish' | 'bearish' | 'neutral';
+  max_expected_change?: number;
+  prediction_start?: string;
+  prediction_end?: string;
+  error?: string;
+}
+
 export interface ModelInfo {
   name: string;
   type: 'autoregressive' | 'multi-model';
@@ -228,6 +242,7 @@ export interface QueueStatus {
 }
 
 export interface ResourceSummary {
-  resources: SystemResources;
+  resources?: SystemResources;  // Only present for admin users
   queue: QueueStatus;
+  is_admin: boolean;  // Whether the current user has admin role
 }

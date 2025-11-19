@@ -16,10 +16,10 @@ pip install -r requirements.txt
 Copy the example environment file and add your API keys:
 
 ```bash
-cp ../.env.example ../.env
+cp .env.example .env
 ```
 
-Edit `.env` and add:
+Edit `backend/.env` and add:
 - **Alpaca** credentials (required for stock data): Get from https://alpaca.markets/
 - **Binance** credentials (optional for crypto - public data works without keys): Get from https://www.binance.com/
 
@@ -67,11 +67,11 @@ eth_data = fetcher.fetch('ETHUSDT', timeframe='1h', limit=50)  # Auto-standardiz
 The fetcher supports two trading modes for Alpaca (stocks):
 
 - **Paper trading** (default): Uses paper trading API for testing without real money
-  - Set `ALPACA_PAPERS_KEY` and `ALPACA_PAPERS_SECRET_KEY` in `.env`
+  - Set `ALPACA_PAPERS_KEY` and `ALPACA_PAPERS_SECRET_KEY` in `backend/.env`
   - Initialize with `HistoricalDataFetcher(trading_mode='paper')`
 
 - **Live trading**: Uses live API with real money
-  - Set `ALPACA_API_KEY` and `ALPACA_SECRET_KEY` in `.env`
+  - Set `ALPACA_API_KEY` and `ALPACA_SECRET_KEY` in `backend/.env`
   - Initialize with `HistoricalDataFetcher(trading_mode='live')`
 
 **Important**: Always test your strategies with paper trading before switching to live trading!

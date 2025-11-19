@@ -19,6 +19,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from domain.ml.predictors.autoregressive_predictor import AutoregressivePricePredictor
 from domain.ml.predictors.multi_ohlc_predictor import MultiOHLCPredictor
 from data.historical import HistoricalDataFetcher
+from infrastructure.supabase_client import get_admin_client
 
 
 class MLService:
@@ -36,6 +37,20 @@ class MLService:
             storage_type='parquet'
         )
         self._model_cache = {}
+        self.supabase = get_admin_client()
+        # Get default user ID from Supabase
+        self.default_user_id = self._get_default_user_id()
+
+    def _get_default_user_id(self) -> Optional[str]:
+        """Get the default user ID from Supabase"""
+        try:
+            result = self.supabase.table('users').select('id').limit(1).execute()
+            if result.data and len(result.data) > 0:
+                return result.data[0]['id']
+            return None
+        except Exception as e:
+            print(f"[MLService] Error getting default user ID: {e}")
+            return None
 
     def get_predictions(
         self,
@@ -497,16 +512,18 @@ class MLService:
         symbol: str,
         timeframe: str,
         prediction_id: Optional[str] = None,
-        status: str = 'running'
+        status: str = 'running',
+        user_id: Optional[str] = None
     ) -> str:
         """
-        Create a prediction task entry (for tracking before completion)
+        Create a prediction task entry in Supabase (for tracking before completion)
 
         Args:
             symbol: Trading symbol
             timeframe: Timeframe
             prediction_id: Optional prediction ID (generates new one if not provided)
             status: Task status (running, queued, etc.)
+            user_id: User ID (uses default if not provided)
 
         Returns:
             Prediction ID
@@ -514,37 +531,48 @@ class MLService:
         if prediction_id is None:
             prediction_id = str(uuid.uuid4())
 
+        uid = user_id or self.default_user_id
+        if not uid:
+            raise ValueError("No user ID available for creating prediction task")
+
         save_data = {
             'id': prediction_id,
+            'user_id': uid,
             'symbol': symbol,
             'timeframe': timeframe,
-            'created_at': datetime.now().isoformat(),
             'status': status,
             'result': None
         }
 
-        # Save to file
-        result_file = self.predictions_dir / f"{prediction_id}.json"
-        with open(result_file, 'w') as f:
-            json.dump(save_data, f, indent=2, default=str)
-
-        return prediction_id
+        try:
+            # Save to Supabase
+            response = self.supabase.table('predictions').insert(save_data).execute()
+            if response.data and len(response.data) > 0:
+                print(f"[MLService] Prediction task created in Supabase: {prediction_id}")
+                return prediction_id
+            else:
+                raise Exception("Failed to create prediction task in Supabase")
+        except Exception as e:
+            print(f"[MLService] Error creating prediction task: {e}")
+            raise
 
     def save_prediction_result(
         self,
         symbol: str,
         timeframe: str,
         prediction_data: Dict,
-        prediction_id: Optional[str] = None
+        prediction_id: Optional[str] = None,
+        user_id: Optional[str] = None
     ) -> str:
         """
-        Save prediction results to disk
+        Save prediction results to Supabase
 
         Args:
             symbol: Trading symbol
             timeframe: Timeframe
             prediction_data: Prediction data dictionary
             prediction_id: Optional prediction ID (generates new one if not provided)
+            user_id: User ID (uses default if not provided)
 
         Returns:
             Prediction ID
@@ -552,47 +580,84 @@ class MLService:
         if prediction_id is None:
             prediction_id = str(uuid.uuid4())
 
-        save_data = {
-            'id': prediction_id,
-            'symbol': symbol,
-            'timeframe': timeframe,
-            'created_at': datetime.now().isoformat(),
+        uid = user_id or self.default_user_id
+        if not uid:
+            raise ValueError("No user ID available for saving prediction result")
+
+        # Prepare update data
+        update_data = {
             'status': 'completed',
-            'result': prediction_data
+            'result': prediction_data,
+            'completed_at': datetime.now().isoformat()
         }
 
-        # Save to file
-        result_file = self.predictions_dir / f"{prediction_id}.json"
-        with open(result_file, 'w') as f:
-            json.dump(save_data, f, indent=2, default=str)
+        try:
+            # Update existing prediction record in Supabase
+            response = self.supabase.table('predictions').update(update_data).eq('id', prediction_id).execute()
 
-        return prediction_id
+            if response.data and len(response.data) > 0:
+                print(f"[MLService] Prediction result saved to Supabase: {prediction_id}")
+                return prediction_id
+            else:
+                # If update failed, try insert (in case task wasn't created first)
+                save_data = {
+                    'id': prediction_id,
+                    'user_id': uid,
+                    'symbol': symbol,
+                    'timeframe': timeframe,
+                    'status': 'completed',
+                    'result': prediction_data,
+                    'completed_at': datetime.now().isoformat()
+                }
+                response = self.supabase.table('predictions').insert(save_data).execute()
+                if response.data and len(response.data) > 0:
+                    print(f"[MLService] Prediction result inserted to Supabase: {prediction_id}")
+                    return prediction_id
+                else:
+                    raise Exception("Failed to save prediction result to Supabase")
+        except Exception as e:
+            print(f"[MLService] Error saving prediction result: {e}")
+            import traceback
+            traceback.print_exc()
+            raise
 
-    def get_prediction_result(self, prediction_id: str) -> Optional[Dict]:
+    def get_prediction_result(self, prediction_id: str, user_id: Optional[str] = None) -> Optional[Dict]:
         """
-        Get a specific prediction result
+        Get a specific prediction result from Supabase
 
         Args:
             prediction_id: Prediction result ID
+            user_id: User ID to verify ownership (optional)
 
         Returns:
-            Prediction data or None
+            Prediction data or None if not found or doesn't belong to user
         """
         try:
-            result_file = self.predictions_dir / f"{prediction_id}.json"
-            if not result_file.exists():
-                return None
+            # Query from Supabase with optional user filter
+            query = self.supabase.table('predictions').select('*').eq('id', prediction_id)
 
-            with open(result_file, 'r') as f:
-                return json.load(f)
+            if user_id:
+                query = query.eq('user_id', user_id)
 
-        except Exception as e:
-            print(f"Error loading prediction {prediction_id}: {e}")
+            response = query.execute()
+
+            if response.data and len(response.data) > 0:
+                return response.data[0]
+
             return None
 
-    def list_predictions(self) -> List[Dict]:
+        except Exception as e:
+            print(f"[MLService] Error loading prediction {prediction_id}: {e}")
+            import traceback
+            traceback.print_exc()
+            return None
+
+    def list_predictions(self, user_id: Optional[str] = None) -> List[Dict]:
         """
-        List all saved prediction results
+        List all saved prediction results from Supabase
+
+        Args:
+            user_id: User ID to filter by (uses default if not provided)
 
         Returns:
             List of prediction summaries
@@ -600,29 +665,36 @@ class MLService:
         results = []
 
         try:
-            for result_file in self.predictions_dir.glob('*.json'):
-                try:
-                    with open(result_file, 'r') as f:
-                        result = json.load(f)
-                        # Return summary without full predictions array
-                        summary = {
-                            'id': result['id'],
-                            'symbol': result['symbol'],
-                            'timeframe': result['timeframe'],
-                            'created_at': result['created_at'],
-                            'status': result.get('status', 'completed'),
-                            'current_price': result.get('result', {}).get('current_price')
-                        }
-                        results.append(summary)
-                except Exception as e:
-                    print(f"Error loading prediction {result_file}: {e}")
-                    continue
+            uid = user_id or self.default_user_id
+            if not uid:
+                print("[MLService] No user ID available for listing predictions")
+                return []
+
+            # Query from Supabase - exclude result column to avoid fetching massive predictions array
+            # The result column contains 300 steps of OHLC predictions which can be 100KB+ per row
+            # For list view, we only need metadata - full details are fetched when viewing individual prediction
+            response = self.supabase.table('predictions').select(
+                'id, symbol, timeframe, created_at, status'
+            ).eq('user_id', uid).order('created_at', desc=True).execute()
+
+            if response.data:
+                for prediction in response.data:
+                    # Return summary data without predictions array
+                    summary = {
+                        'id': prediction['id'],
+                        'symbol': prediction['symbol'],
+                        'timeframe': prediction['timeframe'],
+                        'created_at': prediction['created_at'],
+                        'status': prediction.get('status', 'completed'),
+                        'current_price': None  # Not fetched in list view for performance
+                    }
+                    results.append(summary)
 
         except Exception as e:
-            print(f"Error listing predictions: {e}")
+            print(f"[MLService] Error listing predictions from Supabase: {e}")
+            import traceback
+            traceback.print_exc()
 
-        # Sort by creation date (most recent first)
-        results.sort(key=lambda x: x['created_at'], reverse=True)
         return results
 
 

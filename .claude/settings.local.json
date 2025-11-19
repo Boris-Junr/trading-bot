@@ -1,19 +1,23 @@
 {
   "permissions": {
     "allow": [
-        "Task",
-        "Bash",
-        "Glob",
-        "Grep",
-        "LS",
-        "Read",
-        "Edit",
-        "MultiEdit",
-        "Write",
-        "WebFetch",
-        "WebSearch"
+      "Task",
+      "Bash",
+      "Glob",
+      "Grep",
+      "LS",
+      "Read",
+      "Edit",
+      "MultiEdit",
+      "Write",
+      "WebFetch",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []
-  }
+  },
+  "enabledMcpjsonServers": [
+    "supabase"
+  ],
+  "enableAllProjectMcpServers": true
 }

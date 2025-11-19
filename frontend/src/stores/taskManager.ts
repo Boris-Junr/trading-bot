@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Task, ResourceSummary } from '@/types'
 import axios from 'axios'
+import { supabase } from '@/lib/supabase'
 
 const API_BASE_URL = 'http://localhost:8000'
 
@@ -11,6 +12,7 @@ export const useTaskManagerStore = defineStore('taskManager', () => {
   const resources = ref<ResourceSummary | null>(null)
   const isMonitoring = ref(false)
   const pollingInterval = ref<number | null>(null)
+  const isAdmin = ref(false)
 
   // Computed
   const queuedTasks = computed(() => {
@@ -65,8 +67,24 @@ export const useTaskManagerStore = defineStore('taskManager', () => {
   // Actions
   async function fetchResources() {
     try {
-      const response = await axios.get<ResourceSummary>(`${API_BASE_URL}/api/system/resources`)
+      // Get auth token
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        console.error('[TaskManager] No auth token available')
+        return
+      }
+
+      const response = await axios.get<ResourceSummary>(`${API_BASE_URL}/api/system/resources`, {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      })
       resources.value = response.data
+
+      // Update admin status if included in response
+      if (typeof response.data.is_admin === 'boolean') {
+        isAdmin.value = response.data.is_admin
+      }
 
       // Debug logging
       console.log('[TaskManager] Fetched resources:', {
@@ -182,8 +200,17 @@ export const useTaskManagerStore = defineStore('taskManager', () => {
     console.log('[TaskManager] Initial resources loaded')
 
     // Set up SSE for real-time task updates (includes CPU/RAM via heartbeat)
-    console.log('[TaskManager] 🔌 Attempting SSE connection to:', `${API_BASE_URL}/api/system/task-events`)
-    const eventSource = new EventSource(`${API_BASE_URL}/api/system/task-events`)
+    // Get auth token for SSE connection
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.access_token) {
+      console.error('[TaskManager] No auth token available for SSE')
+      return
+    }
+
+    // EventSource doesn't support custom headers, so pass token as query parameter
+    const sseUrl = `${API_BASE_URL}/api/system/task-events?token=${session.access_token}`
+    console.log('[TaskManager] 🔌 Attempting SSE connection to:', sseUrl)
+    const eventSource = new EventSource(sseUrl)
 
     eventSource.onopen = () => {
       console.log('[TaskManager] ✅ SSE connection established successfully!')
@@ -194,7 +221,12 @@ export const useTaskManagerStore = defineStore('taskManager', () => {
         const data = JSON.parse(event.data)
         console.log('[TaskManager] Received SSE event:', data.type, data)
 
-        // Update resources from event (every event includes CPU/RAM stats)
+        // Update admin status if included
+        if (typeof data.is_admin === 'boolean') {
+          isAdmin.value = data.is_admin
+        }
+
+        // Update resources from event (only for admin users)
         if (data.resources) {
           if (resources.value) {
             resources.value.resources = data.resources
@@ -382,6 +414,7 @@ export const useTaskManagerStore = defineStore('taskManager', () => {
     tasks,
     resources,
     isMonitoring,
+    isAdmin,
 
     // Computed
     queuedTasks,

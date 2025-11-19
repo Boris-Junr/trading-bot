@@ -8,6 +8,7 @@ from datetime import datetime
 from typing import Optional, List, Dict
 import pandas as pd
 import json
+import uuid
 
 # Add backend to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -17,6 +18,7 @@ from domain.strategies.registry import get_strategy_registry
 from data.historical import HistoricalDataFetcher
 from domain.ml.predictors.multi_ohlc_predictor import MultiOHLCPredictor
 from utils import sanitize_metric, sanitize_dict
+from infrastructure.supabase_client import get_admin_client
 
 
 class BacktestService:
@@ -31,6 +33,27 @@ class BacktestService:
             use_cache=True,
             storage_type='parquet'
         )
+        self.supabase = get_admin_client()
+        # Get default user ID from Supabase
+        self.default_user_id = self._get_default_user_id()
+
+    def _get_default_user_id(self) -> Optional[str]:
+        """Get the default user ID from Supabase"""
+        try:
+            print("[BacktestService] Fetching default user ID from Supabase...")
+            result = self.supabase.table('users').select('id').limit(1).execute()
+            if result.data and len(result.data) > 0:
+                user_id = result.data[0]['id']
+                print(f"[BacktestService] ✓ Default user ID set to: {user_id}")
+                return user_id
+            else:
+                print("[BacktestService] ⚠️  No users found in database!")
+                return None
+        except Exception as e:
+            print(f"[BacktestService] ❌ Error getting default user ID: {e}")
+            import traceback
+            traceback.print_exc()
+            return None
 
     def run_backtest(
         self,
@@ -39,6 +62,7 @@ class BacktestService:
         start_date: str,
         end_date: str,
         initial_cash: float = 10000.0,
+        user_id: Optional[str] = None,
         **strategy_params
     ) -> Optional[Dict]:
         """
@@ -150,7 +174,7 @@ class BacktestService:
             print(f"{'='*80}\n")
 
             # Save results
-            result_id = self._save_results(strategy, symbol, start_date, end_date, results)
+            result_id = self._save_results(strategy, symbol, start_date, end_date, results, user_id=user_id)
             print(f"[BACKTEST] OK - Results saved with ID: {result_id}")
 
             return {
@@ -186,9 +210,12 @@ class BacktestService:
             traceback.print_exc()
             return None
 
-    def list_backtests(self) -> List[Dict]:
+    def list_backtests(self, user_id: Optional[str] = None) -> List[Dict]:
         """
-        List all saved backtest results
+        List all saved backtest results from Supabase
+
+        Args:
+            user_id: Optional user ID to filter by (uses default if not provided)
 
         Returns:
             List of backtest result summaries
@@ -196,25 +223,42 @@ class BacktestService:
         results = []
 
         try:
-            for result_file in self.results_dir.glob('*.json'):
-                try:
-                    with open(result_file, 'r') as f:
-                        result = json.load(f)
-                        # Sanitize loaded data to handle inf/nan from old files
-                        result = sanitize_dict(result)
-                        results.append(result)
-                except Exception as e:
-                    print(f"Error loading result {result_file}: {e}")
-                    continue
+            uid = user_id or self.default_user_id
+            if not uid:
+                print("No user ID available for listing backtests")
+                return []
+
+            # Query from Supabase - only select needed columns to avoid fetching massive trades_data JSONB
+            response = self.supabase.table('backtests').select(
+                'id, status, strategy, symbol, start_date, end_date, created_at, performance, trading'
+            ).eq('user_id', uid).order('created_at', desc=True).execute()
+
+            if response.data:
+                for backtest in response.data:
+                    # Convert to format expected by API
+                    result = {
+                        'id': backtest['id'],
+                        'status': backtest.get('status', 'completed'),
+                        'strategy': backtest['strategy'],
+                        'symbol': backtest['symbol'],
+                        'start_date': backtest['start_date'],
+                        'end_date': backtest['end_date'],
+                        'created_at': backtest['created_at'],
+                        'performance': sanitize_dict(backtest.get('performance', {})),
+                        'trading': sanitize_dict(backtest.get('trading', {}))
+                    }
+                    results.append(result)
 
         except Exception as e:
-            print(f"Error listing backtests: {e}")
+            print(f"Error listing backtests from Supabase: {e}")
+            import traceback
+            traceback.print_exc()
 
         return results
 
     def get_backtest(self, backtest_id: str) -> Optional[Dict]:
         """
-        Get a specific backtest result
+        Get a specific backtest result from Supabase
 
         Args:
             backtest_id: Backtest result ID
@@ -223,17 +267,33 @@ class BacktestService:
             Backtest results or None
         """
         try:
-            result_file = self.results_dir / f"{backtest_id}.json"
-            if not result_file.exists():
-                return None
+            response = self.supabase.table('backtests').select('*').eq('id', backtest_id).execute()
 
-            with open(result_file, 'r') as f:
-                result = json.load(f)
-                # Sanitize loaded data to handle inf/nan from old files
-                return sanitize_dict(result)
+            if response.data and len(response.data) > 0:
+                backtest = response.data[0]
+                # Convert to format expected by API
+                result = {
+                    'id': backtest['id'],
+                    'status': backtest.get('status', 'completed'),
+                    'strategy': backtest['strategy'],
+                    'symbol': backtest['symbol'],
+                    'start_date': backtest['start_date'],
+                    'end_date': backtest['end_date'],
+                    'created_at': backtest['created_at'],
+                    'results': {
+                        'performance': sanitize_dict(backtest.get('performance', {})),
+                        'trading': sanitize_dict(backtest.get('trading', {})),
+                        'trades': backtest.get('trades_data', [])
+                    }
+                }
+                return result
+
+            return None
 
         except Exception as e:
-            print(f"Error getting backtest: {e}")
+            print(f"Error getting backtest from Supabase: {e}")
+            import traceback
+            traceback.print_exc()
             return None
 
     def _create_strategy(self, strategy_name: str, symbol: str, params: Dict, backtest_start_date: str = None):
@@ -451,31 +511,83 @@ class BacktestService:
         symbol: str,
         start_date: str,
         end_date: str,
-        results: Dict
+        results: Dict,
+        user_id: Optional[str] = None
     ) -> str:
-        """Save backtest results to file"""
-        # Generate ID (normalize symbol for filesystem)
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        symbol_normalized = symbol.replace('/', '_')
-        result_id = f"{strategy}_{symbol_normalized}_{timestamp}"
+        """Save backtest results to Supabase"""
+        try:
+            uid = user_id or self.default_user_id
+            if not uid:
+                raise ValueError("No user ID available for saving backtest results")
 
-        # Prepare results for saving (sanitize to handle inf/nan)
-        save_data = {
-            'id': result_id,
-            'strategy': strategy,
-            'symbol': symbol,
-            'start_date': start_date,
-            'end_date': end_date,
-            'created_at': datetime.now().isoformat(),
-            'results': sanitize_dict(results)
-        }
+            # Extract performance and trading data
+            performance = sanitize_dict(results.get('performance', {}))
+            trading = sanitize_dict(results.get('trading', {}))
 
-        # Save to file
-        result_file = self.results_dir / f"{result_id}.json"
-        with open(result_file, 'w') as f:
-            json.dump(save_data, f, indent=2, default=str)
+            # Convert Trade objects to dictionaries for JSON serialization
+            trades_raw = results.get('trades', [])
+            trades_data = []
+            for trade in trades_raw:
+                if hasattr(trade, '__dict__'):
+                    # Convert Trade object to dict (Trade class from domain.strategies.portfolio)
+                    trade_dict = {
+                        'symbol': trade.symbol,
+                        'side': trade.side,
+                        'entry_price': float(trade.entry_price),
+                        'entry_time': trade.entry_time.isoformat() if hasattr(trade.entry_time, 'isoformat') else str(trade.entry_time),
+                        'exit_price': float(trade.exit_price),
+                        'exit_time': trade.exit_time.isoformat() if hasattr(trade.exit_time, 'isoformat') else str(trade.exit_time),
+                        'size': float(trade.size),
+                        'pnl': float(trade.pnl),
+                        'pnl_pct': float(trade.pnl_pct),
+                        'commission': float(trade.commission) if hasattr(trade, 'commission') else 0.0
+                    }
+                    trades_data.append(trade_dict)
+                elif isinstance(trade, dict):
+                    # Already a dict, just ensure values are serializable
+                    trades_data.append(sanitize_dict(trade))
+                else:
+                    print(f"[WARNING] Unknown trade format: {type(trade)}")
 
-        return result_id
+            print(f"[BacktestService] Serialized {len(trades_data)} trades for storage")
+
+            # Prepare data for Supabase
+            save_data = {
+                'user_id': uid,
+                'strategy': strategy,
+                'symbol': symbol,
+                'start_date': start_date,
+                'end_date': end_date,
+                'initial_capital': performance.get('initial_cash', 10000.0),
+                'status': 'completed',
+                'performance': performance,
+                'trading': trading,
+                'trades_data': trades_data,
+                'completed_at': datetime.now().isoformat()
+            }
+
+            # Insert into Supabase
+            response = self.supabase.table('backtests').insert(save_data).execute()
+
+            if response.data and len(response.data) > 0:
+                result_id = response.data[0]['id']
+                print(f"Backtest saved to Supabase with ID: {result_id}")
+                return result_id
+            else:
+                raise Exception("Failed to save backtest to Supabase")
+
+        except Exception as e:
+            print(f"❌ CRITICAL ERROR saving backtest to Supabase: {e}")
+            import traceback
+            traceback.print_exc()
+
+            # Log the data that was being saved for debugging
+            print(f"[DEBUG] User ID: {uid}")
+            print(f"[DEBUG] Strategy: {strategy}")
+            print(f"[DEBUG] Symbol: {symbol}")
+
+            # Re-raise the exception so we know something went wrong
+            raise Exception(f"Failed to save backtest to Supabase: {e}") from e
 
 
 # Singleton instance

@@ -1,7 +1,10 @@
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { ref, computed, onUnmounted } from 'vue';
 import type { BacktestResult, BacktestScenario } from '../types';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 import api from '../services/api';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/composables/useAuth';
 
 export const useBacktestStore = defineStore('backtest', () => {
   // State
@@ -10,6 +13,12 @@ export const useBacktestStore = defineStore('backtest', () => {
   const scenarios = ref<BacktestScenario[]>([]);
   const loading = ref(false);
   const error = ref<string | null>(null);
+
+  // Real-time subscription
+  let realtimeChannel: RealtimeChannel | null = null;
+
+  // Get authenticated user
+  const { user } = useAuth();
 
   // Getters
   const sortedBacktests = computed(() => {
@@ -80,8 +89,40 @@ export const useBacktestStore = defineStore('backtest', () => {
     loading.value = true;
     error.value = null;
     try {
-      backtests.value = await api.getBacktests();
+      if (!user.value) {
+        console.log('No authenticated user, skipping backtest fetch');
+        backtests.value = [];
+        return;
+      }
+
+      // Fetch from Supabase
+      const { data, error: fetchError } = await supabase
+        .from('backtests')
+        .select('*')
+        .eq('user_id', user.value.id)
+        .order('created_at', { ascending: false });
+
+      if (fetchError) throw fetchError;
+
+      backtests.value = (data || []).map(bt => ({
+        id: bt.id,
+        strategy: bt.strategy,
+        symbol: bt.symbol,
+        start_date: bt.start_date,
+        end_date: bt.end_date,
+        created_at: bt.created_at,
+        status: bt.status || 'completed',
+        performance: bt.performance || {},
+        trading: bt.trading || {},
+        error: bt.error
+      }));
+
+      // Set up real-time subscription if not already set up
+      if (!realtimeChannel) {
+        setupRealtimeSubscription();
+      }
     } catch (e: any) {
+      console.error('Error fetching backtests:', e);
       error.value = e.message || 'Failed to fetch backtests';
       throw e;
     } finally {
@@ -93,9 +134,36 @@ export const useBacktestStore = defineStore('backtest', () => {
     loading.value = true;
     error.value = null;
     try {
-      currentBacktest.value = await api.getBacktest(id);
+      // Fetch from Supabase
+      const { data, error: fetchError } = await supabase
+        .from('backtests')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      currentBacktest.value = {
+        id: data.id,
+        strategy: data.strategy,
+        symbol: data.symbol,
+        start_date: data.start_date,
+        end_date: data.end_date,
+        created_at: data.created_at,
+        status: data.status || 'completed',
+        performance: data.performance || {},
+        trading: data.trading || {},
+        results: {
+          performance: data.performance || {},
+          trading: data.trading || {},
+          trades: data.trades_data || []
+        },
+        error: data.error
+      };
+
       return currentBacktest.value;
     } catch (e: any) {
+      console.error('Error fetching backtest:', e);
       error.value = e.message || 'Failed to fetch backtest';
       throw e;
     } finally {
@@ -140,6 +208,73 @@ export const useBacktestStore = defineStore('backtest', () => {
     error.value = null;
   }
 
+  function setupRealtimeSubscription() {
+    if (!user.value) return;
+
+    console.log('Setting up real-time subscription for backtests');
+
+    realtimeChannel = supabase
+      .channel('backtests_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'backtests',
+          filter: `user_id=eq.${user.value.id}`
+        },
+        (payload) => {
+          console.log('Backtest change detected:', payload);
+
+          if (payload.eventType === 'INSERT') {
+            // New backtest added
+            const newBacktest = {
+              id: payload.new.id,
+              strategy: payload.new.strategy,
+              symbol: payload.new.symbol,
+              start_date: payload.new.start_date,
+              end_date: payload.new.end_date,
+              created_at: payload.new.created_at,
+              status: payload.new.status || 'completed',
+              performance: payload.new.performance || {},
+              trading: payload.new.trading || {},
+              error: payload.new.error
+            };
+            backtests.value.unshift(newBacktest);
+          } else if (payload.eventType === 'UPDATE') {
+            // Backtest updated (e.g., status changed from running to completed)
+            const index = backtests.value.findIndex(bt => bt.id === payload.new.id);
+            if (index !== -1) {
+              backtests.value[index] = {
+                ...backtests.value[index],
+                status: payload.new.status,
+                performance: payload.new.performance || {},
+                trading: payload.new.trading || {},
+                error: payload.new.error
+              };
+            }
+          } else if (payload.eventType === 'DELETE') {
+            // Backtest deleted
+            backtests.value = backtests.value.filter(bt => bt.id !== payload.old.id);
+          }
+        }
+      )
+      .subscribe();
+  }
+
+  function unsubscribeRealtime() {
+    if (realtimeChannel) {
+      console.log('Unsubscribing from real-time backtest updates');
+      supabase.removeChannel(realtimeChannel);
+      realtimeChannel = null;
+    }
+  }
+
+  // Cleanup on store disposal
+  onUnmounted(() => {
+    unsubscribeRealtime();
+  });
+
   return {
     // State
     backtests,
@@ -157,5 +292,7 @@ export const useBacktestStore = defineStore('backtest', () => {
     fetchScenarios,
     setCurrentBacktest,
     clearError,
+    setupRealtimeSubscription,
+    unsubscribeRealtime,
   };
 });

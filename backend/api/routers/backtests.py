@@ -13,10 +13,11 @@ from pathlib import Path
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import StreamingResponse
 from api import models
 from api.services.backtest_service import get_backtest_service
+from api.auth import get_current_user_id
 from infrastructure.resource_manager import (
     get_resource_monitor,
     get_task_queue,
@@ -293,7 +294,10 @@ async def stream_backtest(
 
 
 @router.post("/run")
-async def run_backtest(request: models.BacktestRequest):
+async def run_backtest(
+    request: models.BacktestRequest,
+    user_id: str = Depends(get_current_user_id)
+):
     """
     Run a new backtest in background with task queuing and resource management.
 
@@ -355,6 +359,7 @@ async def run_backtest(request: models.BacktestRequest):
                     start_date=request.start_date,
                     end_date=request.end_date,
                     initial_cash=request.initial_capital,
+                    user_id=user_id,
                     **request.params
                 )
 

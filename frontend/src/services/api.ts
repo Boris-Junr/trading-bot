@@ -7,6 +7,7 @@ import type {
   Strategy,
   Portfolio,
 } from '../types';
+import { supabase } from '@/lib/supabase';
 
 class ApiService {
   private client: AxiosInstance;
@@ -22,11 +23,11 @@ class ApiService {
 
     // Request interceptor
     this.client.interceptors.request.use(
-      (config) => {
-        // Add auth token if available
-        const token = localStorage.getItem('auth_token');
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
+      async (config) => {
+        // Add Supabase auth token if available
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          config.headers.Authorization = `Bearer ${session.access_token}`;
         }
         return config;
       },
@@ -36,10 +37,10 @@ class ApiService {
     // Response interceptor
     this.client.interceptors.response.use(
       (response) => response,
-      (error) => {
+      async (error) => {
         if (error.response?.status === 401) {
-          // Handle unauthorized
-          localStorage.removeItem('auth_token');
+          // Handle unauthorized - sign out and redirect
+          await supabase.auth.signOut();
           window.location.href = '/login';
         }
         return Promise.reject(error);
@@ -81,13 +82,21 @@ class ApiService {
   async generatePredictions(
     symbol: string,
     timeframe: string,
-    model_path: string
-  ): Promise<PredictionData> {
-    const response = await this.client.post('/predictions/generate', {
-      symbol,
-      timeframe,
-      model_path,
+    autoTrain: boolean = true
+  ): Promise<any> {
+    const response = await this.client.post('/predictions/generate', null, {
+      params: { symbol, timeframe, auto_train: autoTrain },
     });
+    return response.data;
+  }
+
+  async listPredictions(): Promise<any[]> {
+    const response = await this.client.get('/predictions/list');
+    return response.data;
+  }
+
+  async getPredictionById(predictionId: string): Promise<any> {
+    const response = await this.client.get(`/predictions/${predictionId}`);
     return response.data;
   }
 

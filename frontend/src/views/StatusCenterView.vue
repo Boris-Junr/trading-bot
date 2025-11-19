@@ -1,6 +1,7 @@
 <template>
   <div class="status-center-view">
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <!-- Admin-only Resource Metrics -->
+    <div v-if="taskManager.isAdmin" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
       <!-- System Resources Card -->
       <SystemResources
         :totalCores="taskManager.resources?.resources.cpu.total_cores || 0"
@@ -56,6 +57,35 @@
               <Badge :variant="ramCapacityVariant" size="sm">
                 {{ ramCapacityText }}
               </Badge>
+            </div>
+          </div>
+        </div>
+      </Card>
+    </div>
+
+    <!-- Non-Admin Task Summary -->
+    <div v-else class="mb-6">
+      <Card>
+        <div class="space-y-4">
+          <h3 class="text-lg font-semibold text-text-primary">My Tasks</h3>
+
+          <div class="grid grid-cols-3 gap-4">
+            <!-- Running Tasks -->
+            <div class="stat-item">
+              <div class="stat-label">Running</div>
+              <div class="stat-value text-success">{{ taskManager.runningTasks.length }}</div>
+            </div>
+
+            <!-- Queued Tasks -->
+            <div class="stat-item">
+              <div class="stat-label">Queued</div>
+              <div class="stat-value text-warning">{{ taskManager.queuedTasks.length }}</div>
+            </div>
+
+            <!-- Completed Tasks -->
+            <div class="stat-item">
+              <div class="stat-label">Completed</div>
+              <div class="stat-value text-text-muted">{{ taskManager.completedTasks.length }}</div>
             </div>
           </div>
         </div>

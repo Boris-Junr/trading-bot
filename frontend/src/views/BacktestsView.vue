@@ -208,6 +208,7 @@ import { useBacktestStore } from '../stores/backtest'
 import { storeToRefs } from 'pinia'
 import type { BacktestResult, ModelInfo } from '../types'
 import api from '../services/api'
+import { supabase } from '@/lib/supabase'
 import { useFormatters } from '@/composables/useFormatters'
 import { useSymbols } from '@/composables/useSymbols'
 import { InformationCircleIcon, ClockIcon, ChartPieIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
@@ -333,10 +334,17 @@ async function runBacktest() {
   const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
 
   try {
+    // Get the current session token from Supabase
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      throw new Error('No active session. Please log in.')
+    }
+
     const response = await fetch(`${baseURL}/backtests/run`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
       },
       body: JSON.stringify({
         strategy: newBacktest.value.strategy,
