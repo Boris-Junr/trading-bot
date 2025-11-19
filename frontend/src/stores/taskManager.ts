@@ -231,7 +231,7 @@ export const useTaskManagerStore = defineStore('taskManager', () => {
           if (resources.value) {
             resources.value.resources = data.resources
           } else {
-            resources.value = { resources: data.resources, queue: { queued_count: 0, running_count: 0, queued_tasks: [], running_tasks: [] } }
+            resources.value = { resources: data.resources, queue: { queued_count: 0, running_count: 0, queued_tasks: [], running_tasks: [] }, is_admin: false }
           }
         }
 

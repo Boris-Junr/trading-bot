@@ -279,7 +279,7 @@ async function loadPredictions() {
 
     if (fetchError) throw fetchError
 
-    predictions.value = (data || []).map(pred => {
+    predictions.value = (data || []).map((pred: any) => {
       const result = pred.result || {}
       const preds = result.predictions || []
 
@@ -337,7 +337,7 @@ async function generatePrediction() {
   generating.value = true
 
   try {
-    const data = await api.generatePredictions(
+    await api.generatePredictions(
       newPrediction.value.symbol,
       newPrediction.value.timeframe,
       true // auto_train
@@ -448,17 +448,17 @@ function setupRealtimeSubscription() {
         table: 'predictions',
         filter: `user_id=eq.${user.value.id}`
       },
-      (payload) => {
+      (payload: any) => {
         console.log('Prediction change detected:', payload)
 
         if (payload.eventType === 'INSERT') {
           // New prediction added
           const newPrediction = {
-            id: payload.new.id,
-            symbol: payload.new.symbol,
-            timeframe: payload.new.timeframe,
-            created_at: payload.new.created_at,
-            status: payload.new.status || 'running',
+            id: payload.new.id || '',
+            symbol: payload.new.symbol || '',
+            timeframe: payload.new.timeframe || '',
+            created_at: payload.new.created_at || new Date().toISOString(),
+            status: (payload.new.status || 'running') as 'completed' | 'running' | 'queued' | 'failed',
             current_price: payload.new.result?.current_price
           }
           predictions.value.unshift(newPrediction)
@@ -468,7 +468,7 @@ function setupRealtimeSubscription() {
           if (index !== -1) {
             predictions.value[index] = {
               ...predictions.value[index],
-              status: payload.new.status,
+              status: (payload.new.status || predictions.value[index].status) as 'completed' | 'running' | 'queued' | 'failed',
               current_price: payload.new.result?.current_price
             }
           }
