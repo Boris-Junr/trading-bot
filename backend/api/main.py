@@ -65,14 +65,26 @@ app = FastAPI(
 )
 
 # Configure CORS middleware
+# Get allowed origins from environment variable, fallback to localhost for development
+allowed_origins_env = os.getenv('CORS_ALLOWED_ORIGINS', '')
+allowed_origins = [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://localhost:5175",
+    "http://localhost:5176"
+]
+
+# Add production origins from environment variable
+if allowed_origins_env:
+    production_origins = [origin.strip() for origin in allowed_origins_env.split(',')]
+    allowed_origins.extend(production_origins)
+    print(f"[Startup] Added production CORS origins: {production_origins}")
+
+print(f"[Startup] Allowed CORS origins: {allowed_origins}")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "http://localhost:5175",
-        "http://localhost:5176"
-    ],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
