@@ -45,7 +45,7 @@ htmlcov/
 *.csv
 *.h5
 *.parquet
-data/
+# Note: backend/data/ contains source code and should NOT be ignored
 
 # Runtime artifacts
 backend/runtime/models/
