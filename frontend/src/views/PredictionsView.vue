@@ -197,24 +197,24 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
-import type { PredictionListItem, PredictionData } from '@/types'
+import type { PredictionListItem, PredictionData } from '../types'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 import { SparklesIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
-import { useFormatters } from '@/composables/useFormatters'
-import { useSymbols } from '@/composables/useSymbols'
-import { useTaskManagerStore } from '@/stores/taskManager'
-import { useAuth } from '@/composables/useAuth'
-import api from '@/services/api'
-import { supabase } from '@/lib/supabase'
-import Card from '@/components/ui/Card.vue'
-import Button from '@/components/ui/Button.vue'
-import Badge from '@/components/ui/Badge.vue'
-import Modal from '@/components/ui/Modal.vue'
-import Select from '@/components/ui/Select.vue'
-import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
-import ErrorAlert from '@/components/ui/ErrorAlert.vue'
-import EmptyState from '@/components/ui/EmptyState.vue'
-import PredictionResultsCard from '@/features/predictions/components/PredictionResultsCard.vue'
+import { useFormatters } from '../composables/useFormatters'
+import { useSymbols } from '../composables/useSymbols'
+import { useTaskManagerStore } from '../stores/taskManager'
+import { useAuth } from '../composables/useAuth'
+import api from '../services/api'
+import { supabase } from '../lib/supabase'
+import Card from '../components/ui/Card.vue'
+import Button from '../components/ui/Button.vue'
+import Badge from '../components/ui/Badge.vue'
+import Modal from '../components/ui/Modal.vue'
+import Select from '../components/ui/Select.vue'
+import LoadingSpinner from '../components/ui/LoadingSpinner.vue'
+import ErrorAlert from '../components/ui/ErrorAlert.vue'
+import EmptyState from '../components/ui/EmptyState.vue'
+import PredictionResultsCard from '../features/predictions/components/PredictionResultsCard.vue'
 
 // Formatters
 const { formatDate, formatNumber } = useFormatters()
@@ -466,10 +466,13 @@ function setupRealtimeSubscription() {
           // Prediction updated (e.g., status changed from running to completed)
           const index = predictions.value.findIndex(p => p.id === payload.new.id)
           if (index !== -1) {
-            predictions.value[index] = {
-              ...predictions.value[index],
-              status: (payload.new.status || predictions.value[index].status) as 'completed' | 'running' | 'queued' | 'failed',
-              current_price: payload.new.result?.current_price
+            const currentPrediction = predictions.value[index]
+            if (currentPrediction) {
+              predictions.value[index] = {
+                ...currentPrediction,
+                status: (payload.new.status || currentPrediction.status) as 'completed' | 'running' | 'queued' | 'failed',
+                current_price: payload.new.result?.current_price
+              }
             }
           }
         } else if (payload.eventType === 'DELETE') {

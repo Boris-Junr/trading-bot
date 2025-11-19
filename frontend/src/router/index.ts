@@ -118,7 +118,7 @@ const router = createRouter({
 });
 
 // Navigation guard for authentication and page title
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to, _from, next) => {
   // Update page title
   document.title = to.meta.title ? `${to.meta.title} - Trading Bot` : 'Trading Bot';
 

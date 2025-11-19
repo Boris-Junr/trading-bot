@@ -3,8 +3,8 @@ import { ref, computed, onUnmounted } from 'vue';
 import type { BacktestResult, BacktestScenario } from '../types';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import api from '../services/api';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/composables/useAuth';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../composables/useAuth';
 
 export const useBacktestStore = defineStore('backtest', () => {
   // State
@@ -104,7 +104,7 @@ export const useBacktestStore = defineStore('backtest', () => {
 
       if (fetchError) throw fetchError;
 
-      backtests.value = (data || []).map(bt => ({
+      backtests.value = (data || []).map((bt: any) => ({
         id: bt.id,
         strategy: bt.strategy,
         symbol: bt.symbol,
@@ -153,13 +153,8 @@ export const useBacktestStore = defineStore('backtest', () => {
         status: data.status || 'completed',
         performance: data.performance || {},
         trading: data.trading || {},
-        results: {
-          performance: data.performance || {},
-          trading: data.trading || {},
-          trades: data.trades_data || []
-        },
         error: data.error
-      };
+      } as BacktestResult;
 
       return currentBacktest.value;
     } catch (e: any) {
@@ -223,7 +218,7 @@ export const useBacktestStore = defineStore('backtest', () => {
           table: 'backtests',
           filter: `user_id=eq.${user.value.id}`
         },
-        (payload) => {
+        (payload: any) => {
           console.log('Backtest change detected:', payload);
 
           if (payload.eventType === 'INSERT') {
@@ -245,13 +240,16 @@ export const useBacktestStore = defineStore('backtest', () => {
             // Backtest updated (e.g., status changed from running to completed)
             const index = backtests.value.findIndex(bt => bt.id === payload.new.id);
             if (index !== -1) {
-              backtests.value[index] = {
-                ...backtests.value[index],
-                status: payload.new.status,
-                performance: payload.new.performance || {},
-                trading: payload.new.trading || {},
-                error: payload.new.error
-              };
+              const currentBacktest = backtests.value[index];
+              if (currentBacktest) {
+                backtests.value[index] = {
+                  ...currentBacktest,
+                  status: payload.new.status || currentBacktest.status,
+                  performance: payload.new.performance || currentBacktest.performance,
+                  trading: payload.new.trading || currentBacktest.trading,
+                  error: payload.new.error
+                } as BacktestResult;
+              }
             }
           } else if (payload.eventType === 'DELETE') {
             // Backtest deleted

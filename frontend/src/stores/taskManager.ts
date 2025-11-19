@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Task, ResourceSummary } from '@/types'
 import axios from 'axios'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '../lib/supabase'
 
 const API_BASE_URL = 'http://localhost:8000'
 
@@ -46,22 +46,22 @@ export const useTaskManagerStore = defineStore('taskManager', () => {
 
   const cpuUsagePercent = computed(() => {
     if (!resources.value) return 0
-    return resources.value.resources.cpu.usage_percent || 0
+    return resources.value?.resources?.cpu.usage_percent || 0
   })
 
   const ramUsagePercent = computed(() => {
     if (!resources.value) return 0
-    return resources.value.resources.ram.usage_percent || 0
+    return resources.value?.resources?.ram.usage_percent || 0
   })
 
   const availableCpuCores = computed(() => {
     if (!resources.value) return 0
-    return resources.value.resources.cpu.available_cores
+    return resources.value?.resources?.cpu.available_cores || 0
   })
 
   const availableRamGB = computed(() => {
     if (!resources.value) return 0
-    return resources.value.resources.ram.available_gb
+    return resources.value?.resources?.ram.available_gb || 0
   })
 
   // Actions
