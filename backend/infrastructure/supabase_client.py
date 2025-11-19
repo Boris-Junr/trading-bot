@@ -6,10 +6,12 @@ All queries automatically respect Row Level Security (RLS) policies.
 """
 
 import os
+import ssl
 from typing import Optional
 from pathlib import Path
 from supabase import create_client, Client
 from dotenv import load_dotenv
+import httpx
 
 # Load environment variables from backend/.env file
 env_path = Path(__file__).parent.parent / '.env'
@@ -58,7 +60,17 @@ class SupabaseClient:
             raise ValueError("SUPABASE_SERVICE_ROLE_KEY environment variable is required for admin operations")
 
         if cls._admin_client is None:
-            cls._admin_client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+            # Create httpx client with SSL retry configuration
+            http_client = httpx.Client(
+                timeout=30.0,
+                limits=httpx.Limits(max_keepalive_connections=5, max_connections=10),
+                transport=httpx.HTTPTransport(retries=3)
+            )
+            cls._admin_client = create_client(
+                SUPABASE_URL,
+                SUPABASE_SERVICE_ROLE_KEY,
+                options={'http_client': http_client}
+            )
 
         return cls._admin_client
 
@@ -86,8 +98,17 @@ class SupabaseClient:
         if tenant_id in cls._tenant_clients:
             return cls._tenant_clients[tenant_id]
 
-        # Create new tenant-scoped client
-        client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+        # Create new tenant-scoped client with SSL retry configuration
+        http_client = httpx.Client(
+            timeout=30.0,
+            limits=httpx.Limits(max_keepalive_connections=5, max_connections=10),
+            transport=httpx.HTTPTransport(retries=3)
+        )
+        client = create_client(
+            SUPABASE_URL,
+            SUPABASE_ANON_KEY,
+            options={'http_client': http_client}
+        )
 
         # Set tenant context
         client.rpc('set_tenant_context', {'tenant_uuid': tenant_id}).execute()
@@ -131,8 +152,17 @@ def get_client(access_token: str) -> Client:
     if not SUPABASE_ANON_KEY:
         raise ValueError("SUPABASE_ANON_KEY environment variable is required for user authentication")
 
-    # Create client with anon key
-    client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+    # Create client with anon key and SSL retry configuration
+    http_client = httpx.Client(
+        timeout=30.0,
+        limits=httpx.Limits(max_keepalive_connections=5, max_connections=10),
+        transport=httpx.HTTPTransport(retries=3)
+    )
+    client = create_client(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY,
+        options={'http_client': http_client}
+    )
 
     # Set the user's access token for authentication
     # This will be used for all subsequent requests
