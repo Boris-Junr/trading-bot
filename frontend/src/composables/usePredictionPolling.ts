@@ -107,7 +107,10 @@ export function usePredictionPolling(
   })
   const loadingSteps = ref<LoadingStep[]>(JSON.parse(JSON.stringify(DEFAULT_STEPS)))
 
-  const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
+  const baseURL = import.meta.env.VITE_API_BASE_URL
+  if (!baseURL) {
+    throw new Error('VITE_API_BASE_URL environment variable is not set')
+  }
 
   /**
    * Update a specific loading step status

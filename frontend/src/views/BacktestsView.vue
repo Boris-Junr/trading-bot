@@ -298,7 +298,9 @@ async function fetchModels() {
 async function fetchStrategies() {
   loadingStrategies.value = true
   try {
-    const response = await fetch('http://localhost:8000/api/strategies/available')
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL
+    if (!apiBaseUrl) throw new Error('VITE_API_BASE_URL not set')
+    const response = await fetch(`${apiBaseUrl}/strategies/available`)
     if (response.ok) {
       availableStrategies.value = await response.json()
     } else {
@@ -331,7 +333,10 @@ async function runBacktest() {
   running.value = true
 
   // Use new background execution endpoint
-  const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
+  const baseURL = import.meta.env.VITE_API_BASE_URL
+  if (!baseURL) {
+    throw new Error('VITE_API_BASE_URL environment variable is not set')
+  }
 
   try {
     // Get the current session token from Supabase
