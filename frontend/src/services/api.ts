@@ -55,8 +55,16 @@ class ApiService {
   }
 
   async getBacktest(id: string): Promise<BacktestResult> {
-    const response = await this.client.get(`/backtests/${id}`);
-    return response.data;
+    const { data, error } = await supabase
+      .from('backtests')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+    if (!data) throw new Error('Backtest not found');
+
+    return data as BacktestResult;
   }
 
   async runBacktest(scenario: BacktestScenario): Promise<BacktestResult> {
@@ -96,8 +104,16 @@ class ApiService {
   }
 
   async getPredictionById(predictionId: string): Promise<any> {
-    const response = await this.client.get(`/predictions/${predictionId}`);
-    return response.data;
+    const { data, error } = await supabase
+      .from('predictions')
+      .select('*')
+      .eq('id', predictionId)
+      .single();
+
+    if (error) throw error;
+    if (!data) throw new Error('Prediction not found');
+
+    return data;
   }
 
   // Model endpoints
