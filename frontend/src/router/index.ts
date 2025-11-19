@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '../lib/supabase';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),

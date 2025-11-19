@@ -7,7 +7,7 @@ import type {
   Strategy,
   Portfolio,
 } from '../types';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '../lib/supabase';
 
 class ApiService {
   private client: AxiosInstance;
