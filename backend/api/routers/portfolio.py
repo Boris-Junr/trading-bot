@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException
 from datetime import datetime, timedelta
 from api.models import Portfolio, Position
 
-router = APIRouter(prefix="/portfolio", tags=["portfolio"])
+router = APIRouter(prefix="/api/portfolio", tags=["portfolio"])
 
 
 @router.get("", response_model=Portfolio)
