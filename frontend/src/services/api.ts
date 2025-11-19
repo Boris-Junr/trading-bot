@@ -13,7 +13,12 @@ class ApiService {
   private client: AxiosInstance;
 
   constructor() {
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+
+    if (!apiBaseUrl) {
+      throw new Error('VITE_API_BASE_URL environment variable is not set');
+    }
+
     console.log('[API] Initializing with base URL:', apiBaseUrl);
     console.log('[API] Environment:', import.meta.env.MODE);
 
