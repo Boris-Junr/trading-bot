@@ -3,8 +3,8 @@ import { ref, computed, onUnmounted } from 'vue';
 import type { BacktestResult, BacktestScenario } from '../types';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import api from '../services/api';
-import { supabase } from '../lib/supabase';
-import { useAuth } from '../composables/useAuth';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/composables/useAuth';
 
 export const useBacktestStore = defineStore('backtest', () => {
   // State

@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Task, ResourceSummary } from '@/types'
 import axios from 'axios'
-import { supabase } from '../lib/supabase'
+import { supabase } from '@/lib/supabase'
 
 const API_BASE_URL = 'http://localhost:8000'
 

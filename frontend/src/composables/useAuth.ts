@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue'
-import { supabase } from '../lib/supabase'
+import { supabase } from '@/lib/supabase'
 import type { User, Session } from '@supabase/supabase-js'
 
 const user = ref<User | null>(null)

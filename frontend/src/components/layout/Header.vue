@@ -99,9 +99,9 @@ import {
   ArrowLeftOnRectangleIcon,
 } from '@heroicons/vue/24/outline'
 import Badge from '../ui/Badge.vue'
-import { useTaskManagerStore } from '../../stores/taskManager'
-import { useAuth } from '../../composables/useAuth'
-import { supabase } from '../../lib/supabase'
+import { useTaskManagerStore } from '@/stores/taskManager'
+import { useAuth } from '@/composables/useAuth'
+import { supabase } from '@/lib/supabase'
 
 const route = useRoute()
 const router = useRouter()

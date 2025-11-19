@@ -155,11 +155,11 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { supabase } from '../lib/supabase'
+import { supabase } from '@/lib/supabase'
 import axios from 'axios'
-import Card from '../components/ui/Card.vue'
-import Button from '../components/ui/Button.vue'
-import Badge from '../components/ui/Badge.vue'
+import Card from '@/components/ui/Card.vue'
+import Button from '@/components/ui/Button.vue'
+import Badge from '@/components/ui/Badge.vue'
 
 const API_BASE_URL = 'http://localhost:8000'
 
